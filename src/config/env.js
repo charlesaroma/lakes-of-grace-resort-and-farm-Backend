@@ -9,7 +9,7 @@ const envSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(20, 'JWT_ACCESS_SECRET too short'),
   JWT_REFRESH_SECRET: z.string().min(20, 'JWT_REFRESH_SECRET too short'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  FRONTEND_URL: z.string().url(),
+  FRONTEND_URL: z.string().min(1, 'FRONTEND_URL is required'),
 });
 
 const parsed = envSchema.safeParse(process.env);
