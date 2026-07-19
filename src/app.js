@@ -22,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/crm/leads', leadRoutes);
 
+app.get('/', (req, res) => res.json({ name: 'Lakes of Grace API', version: '1.0.0', health: '/health' }));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 export default app;
