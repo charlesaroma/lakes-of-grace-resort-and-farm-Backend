@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import multer from 'multer';
 import { env } from './config/env.js';
 import leadRoutes from './features/crm/leads/lead.routes.js';
 import bookingRoutes from './features/crm/bookings/booking.routes.js';
@@ -31,6 +32,16 @@ app.use(cors({
   credentials: true,
 }));
 app.use(cookieParser());
+
+// Webhook route needs raw body for HMAC signature verification — must come before express.json()
+app.use('/api/crm/media/webhook', (req, res, next) => {
+  if (req.method === 'POST') {
+    express.raw({ type: 'application/json' })(req, res, next);
+  } else {
+    next();
+  }
+});
+
 app.use(express.json());
 
 // Zod handles NoSQL injection prevention via strict schema validation.
@@ -53,5 +64,12 @@ app.use('/api/media', publicRoutes);
 
 app.get('/', (req, res) => res.json({ name: 'Lakes of Grace API', version: '1.0.0', health: '/health' }));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ message: `Upload error: ${err.message}` });
+  }
+  next(err);
+});
 
 export default app;

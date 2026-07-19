@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import ImageKit from '@imagekit/nodejs';
 import { Media } from './media.model.js';
 import { AuditLog } from '../../../core/audit/auditLog.model.js';
@@ -32,7 +33,7 @@ export const createMedia = async (req, res) => {
   const uploaded = [];
 
   for (const file of files) {
-    const uploadedFile = await imagekit.upload({
+    const uploadedFile = await imagekit.files.upload({
       file: file.buffer,
       fileName: file.originalname,
       folder: '/lakes-of-grace-farm-resort/crm-media',
@@ -70,7 +71,7 @@ export const deleteMedia = async (req, res) => {
 
   if (item.fileId) {
     try {
-      await imagekit.deleteFile(item.fileId);
+      await imagekit.files.delete(item.fileId);
     } catch (err) {
       console.error('Failed to delete file from ImageKit:', err.message);
     }
@@ -88,4 +89,71 @@ export const deleteMedia = async (req, res) => {
   });
 
   res.json({ message: 'Media deleted' });
+};
+
+export const getAuthParams = (req, res) => {
+  const token = crypto.randomUUID();
+  const expire = Math.floor(Date.now() / 1000) + 1800;
+  const signature = crypto
+    .createHmac('sha1', env.IMAGEKIT_PRIVATE_KEY)
+    .update(token + expire)
+    .digest('hex');
+
+  res.json({
+    token,
+    expire,
+    signature,
+    publicKey: env.IMAGEKIT_PUBLIC_KEY,
+    urlEndpoint: env.IMAGEKIT_URL_ENDPOINT,
+  });
+};
+
+export const updateMedia = async (req, res) => {
+  const item = await Media.findByIdAndUpdate(
+    req.params.id,
+    { $set: req.body },
+    { new: true, runValidators: true }
+  );
+  if (!item) return res.status(404).json({ message: 'Media not found' });
+
+  await AuditLog.create({
+    action: 'Media Updated',
+    entityType: 'Media',
+    entityId: req.params.id,
+    actorId: req.user?._id,
+    changes: req.body,
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+    severity: 'Info',
+  });
+
+  res.json(item);
+};
+
+export const recordMedia = async (req, res) => {
+  const { fileId, url, name, tag, size, fileType } = req.body;
+  if (!url) {
+    return res.status(400).json({ message: 'url is required' });
+  }
+
+  const item = await Media.create({
+    url,
+    fileId: fileId || '',
+    tag: tag || 'gallery',
+    size: size ? `${(parseInt(size) / 1024).toFixed(0)} KB` : '',
+    alt: (name || '').replace(/\.[^/.]+$/, ''),
+  });
+
+  await AuditLog.create({
+    action: 'Media Upload',
+    entityType: 'Media',
+    entityId: item._id,
+    actorId: req.user?._id,
+    changes: { url: item.url, tag: item.tag },
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+    severity: 'Info',
+  });
+
+  res.status(201).json(item);
 };

@@ -13,6 +13,7 @@ const envSchema = z.object({
   IMAGEKIT_PUBLIC_KEY: z.string().min(1, 'IMAGEKIT_PUBLIC_KEY is required'),
   IMAGEKIT_PRIVATE_KEY: z.string().min(1, 'IMAGEKIT_PRIVATE_KEY is required'),
   IMAGEKIT_URL_ENDPOINT: z.string().url('IMAGEKIT_URL_ENDPOINT must be a valid URL'),
+  IMAGEKIT_WEBHOOK_SECRET: z.string().min(1, 'IMAGEKIT_WEBHOOK_SECRET is required'),
 });
 
 const parsed = envSchema.safeParse(process.env);
