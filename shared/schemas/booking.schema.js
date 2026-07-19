@@ -1,15 +1,14 @@
 import { z } from 'zod';
 
-/**
- * @typedef {z.infer<typeof bookingSchema>} Booking
- */
-
-export const bookingSchema = z.object({
-  guestId: z.string(), // MongoDB ObjectId string
-  checkIn: z.coerce.date(), // Automatically parses ISO strings to Date objects
+export const createBookingSchema = z.object({
+  guestName: z.string().min(1),
+  guestEmail: z.string().email(),
+  cottage: z.string().min(1),
+  checkIn: z.coerce.date(),
   checkOut: z.coerce.date(),
-  status: z.enum(['pending', 'confirmed', 'cancelled', 'completed']).default('pending'),
-  roomType: z.string(),
   guests: z.number().int().min(1),
+  status: z.enum(['Pending', 'Confirmed', 'Checked-In', 'Checked-Out', 'Cancelled']).default('Pending'),
   totalAmount: z.number().min(0),
 });
+
+export const updateBookingSchema = createBookingSchema.partial();
