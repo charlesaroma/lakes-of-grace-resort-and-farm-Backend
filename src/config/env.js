@@ -10,6 +10,9 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(20, 'JWT_REFRESH_SECRET too short'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   FRONTEND_URL: z.string().min(1, 'FRONTEND_URL is required'),
+  IMAGEKIT_PUBLIC_KEY: z.string().min(1, 'IMAGEKIT_PUBLIC_KEY is required'),
+  IMAGEKIT_PRIVATE_KEY: z.string().min(1, 'IMAGEKIT_PRIVATE_KEY is required'),
+  IMAGEKIT_URL_ENDPOINT: z.string().url('IMAGEKIT_URL_ENDPOINT must be a valid URL'),
 });
 
 const parsed = envSchema.safeParse(process.env);
