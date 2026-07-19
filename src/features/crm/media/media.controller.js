@@ -62,7 +62,9 @@ export const createMedia = async (req, res) => {
     severity: 'Info',
   });
 
-  res.status(201).json(uploaded.length === 1 ? uploaded[0] : uploaded);
+  const result = uploaded.length === 1 ? uploaded[0] : uploaded;
+  req.app.get('io').emit('media:created', result);
+  res.status(201).json(result);
 };
 
 export const deleteMedia = async (req, res) => {
@@ -88,6 +90,7 @@ export const deleteMedia = async (req, res) => {
     severity: 'Warning',
   });
 
+  req.app.get('io').emit('media:deleted', { id: req.params.id });
   res.json({ message: 'Media deleted' });
 };
 
@@ -127,6 +130,7 @@ export const updateMedia = async (req, res) => {
     severity: 'Info',
   });
 
+  req.app.get('io').emit('media:updated', item);
   res.json(item);
 };
 
@@ -154,6 +158,8 @@ export const recordMedia = async (req, res) => {
     userAgent: req.get('user-agent'),
     severity: 'Info',
   });
+
+  req.app.get('io').emit('media:created', item);
 
   res.status(201).json(item);
 };
