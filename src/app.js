@@ -11,6 +11,7 @@ import menuRoutes from './features/crm/menu/menu.routes.js';
 import guestRoutes from './features/crm/guests/guest.routes.js';
 import inquiryRoutes from './features/crm/inquiries/inquiry.routes.js';
 import mediaRoutes from './features/crm/media/media.routes.js';
+import publicRoutes from './features/public/public.routes.js';
 import auditLogRoutes from './core/audit/auditLog.routes.js';
 import authRoutes from './features/auth/auth.routes.js';
 import userRoutes from './features/users/user.routes.js';
@@ -47,6 +48,8 @@ app.use('/api/crm/guests', guestRoutes);
 app.use('/api/crm/inquiries', inquiryRoutes);
 app.use('/api/crm/media', mediaRoutes);
 app.use('/api/crm/audit-logs', auditLogRoutes);
+
+app.use('/api/media', publicRoutes);
 
 app.get('/', (req, res) => res.json({ name: 'Lakes of Grace API', version: '1.0.0', health: '/health' }));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));

@@ -4,7 +4,7 @@ import { AuditLog } from '../../../core/audit/auditLog.model.js';
 export const getMenuItems = async (req, res) => {
   const { category } = req.query;
   const filter = category ? { category } : {};
-  const items = await MenuItem.find(filter).sort({ title: 1 });
+  const items = await MenuItem.find(filter).sort({ category: 1, group: 1, sortOrder: 1 });
   res.json(items);
 };
 
@@ -43,6 +43,11 @@ export const updateMenuItem = async (req, res) => {
     severity: 'Info',
   });
   res.json(item);
+};
+
+export const getPublicMenuItems = async (req, res) => {
+  const items = await MenuItem.find({ status: 'Active' }).sort({ category: 1, group: 1, sortOrder: 1 });
+  res.json(items);
 };
 
 export const deleteMenuItem = async (req, res) => {
