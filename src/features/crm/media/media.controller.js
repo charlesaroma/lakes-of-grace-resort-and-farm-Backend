@@ -24,32 +24,44 @@ export const getMediaItem = async (req, res) => {
   res.json(item);
 };
 
+const IMAGEKIT_MAX_BYTES = 25 * 1024 * 1024; // ImageKit free-tier limit
+
 export const createMedia = async (req, res) => {
   const files = req.files;
   if (!files || files.length === 0) {
     return res.status(400).json({ message: 'No files provided' });
   }
 
-  const tag = (req.body.tag || 'gallery').toLowerCase();
+  const tag = (req.body.tag || 'cottages').toLowerCase();
   const uploaded = [];
+  const oversized = [];
 
   for (const file of files) {
-    const uploadedFile = await imagekit.files.upload({
-      file: file.buffer,
-      fileName: file.originalname,
-      folder: '/lakes-of-grace-farm-resort/crm-media',
-      useUniqueFileName: true,
-    });
+    if (file.size > IMAGEKIT_MAX_BYTES) {
+      oversized.push(`${file.originalname}: ${(file.size / 1024 / 1024).toFixed(0)}MB exceeds the 25MB limit`);
+      continue;
+    }
 
-    const item = await Media.create({
-      url: uploadedFile.url,
-      fileId: uploadedFile.fileId,
-      tag,
-      size: `${(file.size / 1024).toFixed(0)} KB`,
-      alt: file.originalname.replace(/\.[^/.]+$/, ''),
-    });
+    try {
+      const uploadedFile = await imagekit.files.upload({
+        file: file.buffer,
+        fileName: file.originalname,
+        folder: '/lakes-of-grace-farm-resort/crm-media',
+        useUniqueFileName: true,
+      });
 
-    uploaded.push(item);
+      const item = await Media.create({
+        url: uploadedFile.url,
+        fileId: uploadedFile.fileId,
+        tag,
+        size: `${(file.size / 1024).toFixed(0)} KB`,
+        alt: file.originalname.replace(/\.[^/.]+$/, ''),
+      });
+
+      uploaded.push(item);
+    } catch (err) {
+      oversized.push(`${file.originalname}: ${err.message}`);
+    }
   }
 
   await AuditLog.create({
@@ -65,6 +77,11 @@ export const createMedia = async (req, res) => {
 
   const result = uploaded.length === 1 ? uploaded[0] : uploaded;
   req.app.get('io').emit('media:created', result);
+
+  if (oversized.length > 0) {
+    return res.status(207).json({ uploaded: result, errors: oversized });
+  }
+
   res.status(201).json(result);
 };
 
@@ -165,7 +182,7 @@ export const recordMedia = async (req, res) => {
   res.status(201).json(item);
 };
 
-const DEFAULT_TAGS = ['gallery', 'cottages', 'rooms', 'dining', 'spa', 'events', 'amenities'];
+const DEFAULT_TAGS = ['cottages', 'rooms', 'dining', 'activities'];
 
 export const getTagConfig = async (req, res) => {
   let config = await TagConfig.findOne();
