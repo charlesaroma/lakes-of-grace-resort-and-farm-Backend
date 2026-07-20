@@ -161,7 +161,7 @@ export const recordMedia = async (req, res) => {
   const item = await Media.create({
     url,
     fileId: fileId || '',
-    tag: (tag || 'gallery').toLowerCase(),
+    tag: (tag || 'cottages').toLowerCase(),
     size: size ? `${(parseInt(size) / 1024).toFixed(0)} KB` : '',
     alt: (name || '').replace(/\.[^/.]+$/, ''),
   });
