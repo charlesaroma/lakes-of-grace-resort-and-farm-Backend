@@ -1,4 +1,5 @@
 import { Booking } from './booking.model.js';
+import { createBookingSchema, updateBookingSchema } from '../../../../shared/schemas/booking.schema.js';
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -78,4 +79,23 @@ export const getRevenueStats = async (req, res) => {
   }));
 
   res.json(result);
+};
+
+export const createBooking = async (req, res) => {
+  const result = createBookingSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+  }
+  const booking = await Booking.create(result.data);
+  res.status(201).json(formatBooking(booking));
+};
+
+export const updateBooking = async (req, res) => {
+  const result = updateBookingSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+  }
+  const booking = await Booking.findByIdAndUpdate(req.params.id, result.data, { new: true });
+  if (!booking) return res.status(404).json({ message: 'Booking not found' });
+  res.json(formatBooking(booking));
 };

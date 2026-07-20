@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import ImageKit from '@imagekit/nodejs';
 import { Media } from './media.model.js';
+import { TagConfig } from './tagConfig.model.js';
 import { AuditLog } from '../../../core/audit/auditLog.model.js';
 import { env } from '../../../config/env.js';
 
@@ -12,7 +13,7 @@ const imagekit = new ImageKit({
 
 export const getMedia = async (req, res) => {
   const { tag } = req.query;
-  const filter = tag ? { tag } : {};
+  const filter = tag ? { tag: { $regex: `^${tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } } : {};
   const items = await Media.find(filter).sort({ createdAt: -1 });
   res.json(items);
 };
@@ -29,7 +30,7 @@ export const createMedia = async (req, res) => {
     return res.status(400).json({ message: 'No files provided' });
   }
 
-  const tag = req.body.tag || 'gallery';
+  const tag = (req.body.tag || 'gallery').toLowerCase();
   const uploaded = [];
 
   for (const file of files) {
@@ -143,7 +144,7 @@ export const recordMedia = async (req, res) => {
   const item = await Media.create({
     url,
     fileId: fileId || '',
-    tag: tag || 'gallery',
+    tag: (tag || 'gallery').toLowerCase(),
     size: size ? `${(parseInt(size) / 1024).toFixed(0)} KB` : '',
     alt: (name || '').replace(/\.[^/.]+$/, ''),
   });
@@ -162,4 +163,41 @@ export const recordMedia = async (req, res) => {
   req.app.get('io').emit('media:created', item);
 
   res.status(201).json(item);
+};
+
+const DEFAULT_TAGS = ['gallery', 'cottages', 'rooms', 'dining', 'spa', 'events', 'amenities'];
+
+export const getTagConfig = async (req, res) => {
+  let config = await TagConfig.findOne();
+  if (!config) {
+    config = await TagConfig.create({ tags: DEFAULT_TAGS });
+  }
+  res.json(config);
+};
+
+export const updateTagConfig = async (req, res) => {
+  const { tags } = req.body;
+  if (!Array.isArray(tags)) {
+    return res.status(400).json({ message: 'tags must be an array of strings' });
+  }
+
+  let config = await TagConfig.findOne();
+  if (!config) {
+    config = await TagConfig.create({ tags });
+  } else {
+    config.tags = tags;
+    await config.save();
+  }
+
+  await AuditLog.create({
+    action: 'Tag Config Updated',
+    entityType: 'TagConfig',
+    actorId: req.user?._id,
+    changes: { tags },
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+    severity: 'Info',
+  });
+
+  res.json(config);
 };

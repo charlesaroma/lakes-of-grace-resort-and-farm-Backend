@@ -8,7 +8,9 @@ export const createBookingSchema = z.object({
   checkOut: z.coerce.date(),
   guests: z.number().int().min(1),
   status: z.enum(['Pending', 'Confirmed', 'Checked-In', 'Checked-Out', 'Cancelled']).default('Pending'),
-  totalAmount: z.number().min(0),
+  totalAmount: z.number().min(0).optional(),
+  phone: z.string().optional(),
+  specialRequests: z.string().optional(),
 });
 
 export const updateBookingSchema = createBookingSchema.partial();
