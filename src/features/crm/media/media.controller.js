@@ -14,7 +14,8 @@ const imagekit = new ImageKit({
 export const getMedia = async (req, res) => {
   const { tag } = req.query;
   const filter = tag ? { tag: { $regex: `^${tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } } : {};
-  const items = await Media.find(filter).sort({ createdAt: -1 });
+  const items = await Media.find(filter).sort({ createdAt: -1 }).lean();
+  res.set('Cache-Control', 'public, max-age=300');
   res.json(items);
 };
 

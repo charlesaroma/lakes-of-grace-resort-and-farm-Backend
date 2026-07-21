@@ -8,4 +8,6 @@ const mediaSchema = new mongoose.Schema({
   alt: { type: String, trim: true },
 }, { timestamps: true });
 
+mediaSchema.index({ tag: 1, createdAt: -1 });
+
 export const Media = mongoose.model('Media', mediaSchema);
