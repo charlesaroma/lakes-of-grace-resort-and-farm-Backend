@@ -10,11 +10,10 @@ const userSchema = new mongoose.Schema({
   lastLogin: { type: Date },
 }, { timestamps: true });
 
-userSchema.pre('save', function (next) {
+userSchema.pre('save', function () {
   if (typeof this.role === 'string' && !VALID_ROLES.includes(this.role)) {
     this.role = this.role.toLowerCase().replace(/\s+/g, '_');
   }
-  next();
 });
 
 export const User = mongoose.model('User', userSchema);

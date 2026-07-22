@@ -4,7 +4,8 @@ import { Session } from './session.model.js';
 import {
   signAccessToken, signRefreshToken, verifyRefreshToken, hashToken,
 } from './token.utils.js';
-import { registerSchema, loginSchema } from '../../../shared/schemas/auth.schema.js';
+import { registerSchema, loginSchema, changePasswordSchema } from '../../../shared/schemas/auth.schema.js';
+import { AuditLog } from '../../core/audit/auditLog.model.js';
 
 const REFRESH_COOKIE_OPTS = {
   httpOnly: true,
@@ -125,4 +126,34 @@ export const logoutAll = async (req, res) => {
   await Session.updateMany({ userId: req.userId }, { revoked: true });
   res.clearCookie('refreshToken', REFRESH_COOKIE_OPTS);
   res.json({ message: 'Logged out of all devices' });
+};
+
+export const changePassword = async (req, res) => {
+  const result = changePasswordSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+  }
+
+  const { currentPassword, newPassword } = result.data;
+  const user = await User.findById(req.userId);
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) return res.status(400).json({ message: 'Current password is incorrect' });
+
+  user.passwordHash = await bcrypt.hash(newPassword, 12);
+  await user.save();
+
+  await AuditLog.create({
+    action: 'Password changed',
+    entityType: 'User',
+    entityId: user._id,
+    actorId: user._id,
+    actorName: user.name,
+    severity: 'Security',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+
+  res.json({ message: 'Password changed successfully' });
 };

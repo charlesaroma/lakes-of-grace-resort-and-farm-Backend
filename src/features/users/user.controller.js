@@ -114,6 +114,50 @@ export const deleteUser = async (req, res) => {
   res.json({ message: 'User deleted' });
 };
 
+export const updateProfile = async (req, res) => {
+  const { name, email } = req.body;
+  if (!name && !email) {
+    return res.status(400).json({ message: 'Nothing to update' });
+  }
+
+  const user = await User.findById(req.userId);
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  if (email && email !== user.email) {
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(409).json({ message: 'Email already in use' });
+  }
+
+  const changes = {};
+  if (name && name !== user.name) {
+    changes.name = { from: user.name, to: name };
+    user.name = name;
+  }
+  if (email && email !== user.email) {
+    changes.email = { from: user.email, to: email };
+    user.email = email;
+  }
+
+  if (Object.keys(changes).length === 0) {
+    return res.status(400).json({ message: 'No changes provided' });
+  }
+
+  await user.save();
+
+  await AuditLog.create({
+    action: 'Profile Updated',
+    entityType: 'User',
+    entityId: user._id,
+    actorId: req.userId,
+    changes,
+    severity: 'Info',
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+  });
+
+  res.json({ id: user._id, name: user.name, email: user.email, role: user.role });
+};
+
 export const resetPassword = async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) return res.status(404).json({ message: 'User not found' });
