@@ -60,6 +60,9 @@ export const login = async (req, res) => {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
+  user.lastLogin = new Date();
+  await user.save();
+
   const accessToken = signAccessToken(user._id, user.role);
   const refreshToken = signRefreshToken(user._id);
   await createSession(user._id, refreshToken, req);

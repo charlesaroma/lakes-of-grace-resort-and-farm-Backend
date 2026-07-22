@@ -3,7 +3,16 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests, please try again later' },
+});
 import leadRoutes from './features/crm/leads/lead.routes.js';
 import bookingRoutes from './features/crm/bookings/booking.routes.js';
 import cottageRoutes from './features/crm/cottages/cottage.routes.js';
@@ -16,6 +25,7 @@ import publicRoutes from './features/public/public.routes.js';
 import auditLogRoutes from './core/audit/auditLog.routes.js';
 import authRoutes from './features/auth/auth.routes.js';
 import userRoutes from './features/users/user.routes.js';
+import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 
 const app = express();
 
@@ -32,6 +42,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use(cookieParser());
+
+app.use(globalLimiter);
 
 // Webhook route needs raw body for HMAC signature verification — must come before express.json()
 app.use('/api/crm/media/webhook', (req, res, next) => {
@@ -59,6 +71,7 @@ app.use('/api/crm/guests', guestRoutes);
 app.use('/api/crm/inquiries', inquiryRoutes);
 app.use('/api/crm/media', mediaRoutes);
 app.use('/api/crm/audit-logs', auditLogRoutes);
+app.use('/api/crm/dashboard', dashboardRoutes);
 
 app.use('/api/media', publicRoutes);
 
