@@ -25,7 +25,7 @@ export const createStockItem = async (req, res) => {
     action: 'Stock Item Created',
     entityType: 'Stock',
     entityId: item._id,
-    actorId: req.user?._id,
+    actorId: req.userId,
     changes: { item: item.item, category: item.category },
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
@@ -41,7 +41,7 @@ export const updateStockItem = async (req, res) => {
     action: 'Stock Item Updated',
     entityType: 'Stock',
     entityId: item._id,
-    actorId: req.user?._id,
+    actorId: req.userId,
     changes: req.body,
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
@@ -57,7 +57,7 @@ export const deleteStockItem = async (req, res) => {
     action: 'Stock Item Deleted',
     entityType: 'Stock',
     entityId: req.params.id,
-    actorId: req.user?._id,
+    actorId: req.userId,
     changes: { item: item.item },
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
@@ -91,14 +91,14 @@ export const restockItem = async (req, res) => {
     cost,
     supplier,
     note,
-    userId: req.user?._id,
+    userId: req.userId,
   });
 
   await AuditLog.create({
     action: 'Stock Restock',
     entityType: 'Stock',
     entityId: item._id,
-    actorId: req.user?._id,
+    actorId: req.userId,
     changes: { item: item.item, quantity, cost, supplier },
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
@@ -129,7 +129,7 @@ export const dispatchItem = async (req, res) => {
     department,
     purpose,
     note,
-    userId: req.user?._id,
+    userId: req.userId,
   });
 
   const severity = item.quantity < item.threshold ? 'Warning' : 'Info';
@@ -137,7 +137,7 @@ export const dispatchItem = async (req, res) => {
     action: 'Stock Dispatch',
     entityType: 'Stock',
     entityId: item._id,
-    actorId: req.user?._id,
+    actorId: req.userId,
     changes: { item: item.item, quantity, department, purpose },
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
@@ -163,14 +163,14 @@ export const adjustStock = async (req, res) => {
     quantity: variance,
     balance: item.quantity,
     reason,
-    userId: req.user?._id,
+    userId: req.userId,
   });
 
   await AuditLog.create({
     action: 'Stock Adjustment',
     entityType: 'Stock',
     entityId: item._id,
-    actorId: req.user?._id,
+    actorId: req.userId,
     changes: { item: item.item, previous: item.quantity - variance, new: quantity, reason },
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),

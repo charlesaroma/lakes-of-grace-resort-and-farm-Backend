@@ -34,7 +34,7 @@ export const auditLogger = (action, entityType) => {
               action,
               entityType,
               entityId: entityId || null,
-              actorId: req.user?._id || null,
+              actorId: req.userId || null,
               changes: req.body || {},
               ipAddress: req.ip,
               userAgent: req.get('user-agent')
