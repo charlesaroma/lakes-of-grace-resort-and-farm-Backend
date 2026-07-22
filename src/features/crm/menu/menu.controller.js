@@ -2,10 +2,25 @@ import { MenuItem } from './menu.model.js';
 import { AuditLog } from '../../../core/audit/auditLog.model.js';
 
 export const getMenuItems = async (req, res) => {
-  const { category } = req.query;
-  const filter = category ? { category } : {};
-  const items = await MenuItem.find(filter).sort({ category: 1, group: 1, sortOrder: 1 });
-  res.json(items);
+  const { category, search, page = 1, limit = 20 } = req.query;
+  const filter = {};
+  if (category) filter.category = category;
+  if (search) {
+    filter.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+      { category: { $regex: search, $options: 'i' } },
+      { group: { $regex: search, $options: 'i' } },
+    ];
+  }
+  const pageNum = Math.max(1, parseInt(page));
+  const limitNum = Math.max(1, Math.min(100, parseInt(limit)));
+  const skip = (pageNum - 1) * limitNum;
+  const [items, total] = await Promise.all([
+    MenuItem.find(filter).sort({ category: 1, group: 1, sortOrder: 1 }).skip(skip).limit(limitNum),
+    MenuItem.countDocuments(filter),
+  ]);
+  res.json({ items, total, totalPages: Math.ceil(total / limitNum), page: pageNum });
 };
 
 export const getMenuItem = async (req, res) => {
