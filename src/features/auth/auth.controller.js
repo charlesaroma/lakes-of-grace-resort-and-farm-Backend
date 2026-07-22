@@ -48,30 +48,35 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const result = loginSchema.safeParse(req.body);
-  if (!result.success) {
-    return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+  try {
+    const result = loginSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+    }
+
+    const { email, password } = result.data;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const accessToken = signAccessToken(user._id, user.role);
+    const refreshToken = signRefreshToken(user._id);
+    await createSession(user._id, refreshToken, req);
+
+    res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTS);
+    res.json({
+      accessToken,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: err.message || 'Internal server error' });
   }
-
-  const { email, password } = result.data;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
-
-  user.lastLogin = new Date();
-  await user.save();
-
-  const accessToken = signAccessToken(user._id, user.role);
-  const refreshToken = signRefreshToken(user._id);
-  await createSession(user._id, refreshToken, req);
-
-  res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTS);
-  res.json({
-    accessToken,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role },
-  });
 };
 
 export const refresh = async (req, res) => {

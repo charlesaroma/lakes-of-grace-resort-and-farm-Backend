@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 userSchema.pre('save', function (next) {
-  if (this.isModified('role') && typeof this.role === 'string') {
+  if (typeof this.role === 'string' && !VALID_ROLES.includes(this.role)) {
     this.role = this.role.toLowerCase().replace(/\s+/g, '_');
   }
   next();
