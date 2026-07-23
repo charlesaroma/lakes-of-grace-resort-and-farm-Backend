@@ -4,6 +4,7 @@ import app from './app.js';
 import { connectDB } from './config/db.js';
 import { env } from './config/env.js';
 
+// ─── Server Setup ───
 const server = http.createServer(app);
 
 const allowedOrigins = env.FRONTEND_URL.split(',').map(s => s.trim());
@@ -20,6 +21,7 @@ io.on('connection', (socket) => {
   });
 });
 
+// ─── Startup ───
 const start = async () => {
   await connectDB();
   server.listen(env.PORT, () => {

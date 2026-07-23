@@ -1,6 +1,7 @@
 import { Lead } from './lead.model.js';
 import { leadSchema } from '../../../../shared/schemas/lead.schema.js';
 
+// ─── Handlers ───
 export const createLead = async (req, res) => {
   const result = leadSchema.safeParse(req.body);
   if (!result.success) {

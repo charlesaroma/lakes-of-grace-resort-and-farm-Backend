@@ -1,8 +1,10 @@
 import { Booking } from './booking.model.js';
 import { createBookingSchema, updateBookingSchema } from '../../../../shared/schemas/booking.schema.js';
 
+// ─── Constants ───
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+// ─── Formatters ───
 function formatBooking(b) {
   const nights = Math.max(1, Math.round((b.checkOut - b.checkIn) / (1000 * 60 * 60 * 24)));
   const dateStr = `${b.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${b.checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
@@ -33,6 +35,7 @@ function formatRecentBooking(b) {
   };
 }
 
+// ─── Handlers ───
 export const getBookings = async (req, res) => {
   const { status } = req.query;
   const filter = status && status !== 'All' ? { status } : {};

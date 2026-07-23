@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// ─── Schema ───
 const guestSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, trim: true, lowercase: true },
@@ -10,4 +11,5 @@ const guestSchema = new mongoose.Schema({
   notes: { type: String, trim: true },
 }, { timestamps: true });
 
+// ─── Export ───
 export const Guest = mongoose.model('Guest', guestSchema);

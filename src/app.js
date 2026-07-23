@@ -9,6 +9,8 @@ import multer from 'multer';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
 
+// ─── Constants ───
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -22,6 +24,7 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many requests, please try again later' },
 });
+// ─── Route Imports ───
 import leadRoutes from './features/crm/leads/lead.routes.js';
 import bookingRoutes from './features/crm/bookings/booking.routes.js';
 import cottageRoutes from './features/crm/cottages/cottage.routes.js';
@@ -36,8 +39,10 @@ import authRoutes from './features/auth/auth.routes.js';
 import userRoutes from './features/users/user.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 
+// ─── App Initialization ───
 const app = express();
 
+// ─── Middleware ───
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -78,7 +83,7 @@ app.use(express.json());
 // Zod handles NoSQL injection prevention via strict schema validation.
 // Removed express-mongo-sanitize as it crashes Express 5 by trying to mutate read-only req.query.
 
-// Routes
+// ─── Routes ───
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/crm/leads', leadRoutes);
@@ -99,6 +104,7 @@ app.get('/', (req, res) => {
 });
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// ─── Error Handling ───
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ message: `Upload error: ${err.message}` });
@@ -111,4 +117,5 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
 });
 
+// ─── Exports ───
 export default app;

@@ -1,5 +1,6 @@
 import { AuditLog } from './auditLog.model.js';
 
+// ─── Handlers ───
 export const getAuditLogs = async (req, res) => {
   const { severity, entityType, search, startDate, endDate, page, limit = 20 } = req.query;
   const filter = {};

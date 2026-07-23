@@ -13,6 +13,7 @@ import {
   adjustStock,
 } from './stock.controller.js';
 
+// ─── Router ───
 const router = Router();
 
 router.get('/alerts', requireAuth, getStockAlerts);

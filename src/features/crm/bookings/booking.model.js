@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// ─── Schema ───
 const bookingSchema = new mongoose.Schema({
   guestName: { type: String, required: true, trim: true },
   guestEmail: { type: String, required: true, trim: true, lowercase: true },
@@ -17,4 +18,5 @@ const bookingSchema = new mongoose.Schema({
   specialRequests: { type: String, trim: true },
 }, { timestamps: true });
 
+// ─── Export ───
 export const Booking = mongoose.model('Booking', bookingSchema);

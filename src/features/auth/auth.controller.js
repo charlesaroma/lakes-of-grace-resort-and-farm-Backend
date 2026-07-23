@@ -4,6 +4,7 @@ import { signAccessToken } from './token.utils.js';
 import { registerSchema, loginSchema, changePasswordSchema } from '../../../shared/schemas/auth.schema.js';
 import { AuditLog } from '../../core/audit/auditLog.model.js';
 
+// ─── Handlers ───
 export const register = async (req, res) => {
   const result = registerSchema.safeParse(req.body);
   if (!result.success) {

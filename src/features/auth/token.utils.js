@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
 
+// ─── Token Utils ───
 export const signAccessToken = (userId, role) =>
   jwt.sign({ sub: userId, role }, env.JWT_ACCESS_SECRET, { expiresIn: '7d' });
 

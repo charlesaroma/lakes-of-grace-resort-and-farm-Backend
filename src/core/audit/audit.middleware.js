@@ -1,5 +1,6 @@
 import { AuditLog } from './auditLog.model.js';
 
+// ─── Audit Middleware ───
 /**
  * Middleware factory to log actions.
  * @param {string} action - Description of the action (e.g., 'CREATE', 'UPDATE', 'DELETE')

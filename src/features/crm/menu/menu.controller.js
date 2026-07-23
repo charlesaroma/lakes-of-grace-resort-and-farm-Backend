@@ -1,6 +1,7 @@
 import { MenuItem } from './menu.model.js';
 import { AuditLog } from '../../../core/audit/auditLog.model.js';
 
+// ─── Handlers ───
 export const getMenuItems = async (req, res) => {
   const { category, search, page = 1, limit = 20 } = req.query;
   const filter = {};

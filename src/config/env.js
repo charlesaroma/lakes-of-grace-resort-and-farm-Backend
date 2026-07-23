@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// ─── Load Environment ───
+
 const envSchema = z.object({
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
   PORT: z.string().default('5001'),
@@ -16,6 +18,7 @@ const envSchema = z.object({
   IMAGEKIT_WEBHOOK_SECRET: z.string().min(1, 'IMAGEKIT_WEBHOOK_SECRET is required'),
 });
 
+// ─── Validate & Export ───
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// ─── Schema ───
 const mediaSchema = new mongoose.Schema({
   url: { type: String, required: true, trim: true },
   fileId: { type: String, trim: true },
@@ -10,4 +11,5 @@ const mediaSchema = new mongoose.Schema({
 
 mediaSchema.index({ tag: 1, createdAt: -1 });
 
+// ─── Export ───
 export const Media = mongoose.model('Media', mediaSchema);

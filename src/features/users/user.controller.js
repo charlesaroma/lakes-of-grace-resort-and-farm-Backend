@@ -3,6 +3,7 @@ import { User } from './user.model.js';
 import { AuditLog } from '../../core/audit/auditLog.model.js';
 import { createUserSchema, updateUserSchema } from '../../../shared/schemas/user.schema.js';
 
+// ─── Handlers ───
 export const getProfile = async (req, res) => {
   const user = await User.findById(req.userId).select('-passwordHash');
   if (!user) return res.status(404).json({ message: 'User not found' });

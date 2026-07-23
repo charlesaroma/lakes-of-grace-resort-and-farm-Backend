@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// ─── Schema ───
 const cottageSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true, trim: true },
   label: { type: String, required: true, trim: true },
@@ -8,4 +9,5 @@ const cottageSchema = new mongoose.Schema({
   description: { type: String, default: '' },
 }, { timestamps: true });
 
+// ─── Export ───
 export const Cottage = mongoose.model('Cottage', cottageSchema);

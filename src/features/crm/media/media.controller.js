@@ -5,12 +5,14 @@ import { TagConfig } from './tagConfig.model.js';
 import { AuditLog } from '../../../core/audit/auditLog.model.js';
 import { env } from '../../../config/env.js';
 
+// ─── ImageKit Client ───
 const imagekit = new ImageKit({
   publicKey: env.IMAGEKIT_PUBLIC_KEY,
   privateKey: env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: env.IMAGEKIT_URL_ENDPOINT,
 });
 
+// ─── Handlers ───
 export const getMedia = async (req, res) => {
   const { tag } = req.query;
   const filter = tag ? { tag: { $regex: `^${tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } } : {};
@@ -25,6 +27,7 @@ export const getMediaItem = async (req, res) => {
   res.json(item);
 };
 
+// ─── Constants ───
 const IMAGEKIT_MAX_BYTES = 25 * 1024 * 1024; // ImageKit free-tier limit
 
 export const createMedia = async (req, res) => {
@@ -183,6 +186,7 @@ export const recordMedia = async (req, res) => {
   res.status(201).json(item);
 };
 
+// ─── Tag Config ───
 const DEFAULT_TAGS = ['cottages', 'rooms', 'dining', 'activities'];
 
 export const getTagConfig = async (req, res) => {

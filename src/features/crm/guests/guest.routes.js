@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../../../core/middlewares/auth.middleware.js';
 import { getGuests, getGuest, createGuest, updateGuest, deleteGuest } from './guest.controller.js';
 
+// ─── Router ───
 const router = Router();
 
 router.get('/', requireAuth, getGuests);

@@ -1,6 +1,7 @@
 import { StockItem, StockLedger } from './stock.model.js';
 import { AuditLog } from '../../../core/audit/auditLog.model.js';
 
+// ─── Handlers ───
 export const getStockAlerts = async (req, res) => {
   const alerts = await StockItem.find({
     $expr: { $lte: ['$quantity', '$threshold'] },

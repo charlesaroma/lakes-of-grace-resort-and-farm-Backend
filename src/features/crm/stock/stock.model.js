@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// ─── Schemas ───
 const stockItemSchema = new mongoose.Schema({
   item: { type: String, required: true, trim: true },
   category: { type: String, required: true, trim: true },
@@ -23,8 +24,10 @@ const stockLedgerSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 
+// ─── Indexes ───
 stockItemSchema.index({ item: 1 });
 stockLedgerSchema.index({ itemId: 1, createdAt: -1 });
 
+// ─── Exports ───
 export const StockItem = mongoose.model('StockItem', stockItemSchema);
 export const StockLedger = mongoose.model('StockLedger', stockLedgerSchema);

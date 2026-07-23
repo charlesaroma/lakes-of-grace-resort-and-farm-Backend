@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../../../core/middlewares/auth.middleware.js';
 import { getBookings, getBooking, getRecentBookings, getRevenueStats, createBooking, updateBooking } from './booking.controller.js';
 
+// ─── Router ───
 const router = Router();
 
 router.get('/revenue/monthly', requireAuth, getRevenueStats);

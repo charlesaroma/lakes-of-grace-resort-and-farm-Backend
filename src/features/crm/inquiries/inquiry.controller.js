@@ -1,5 +1,6 @@
 import { Inquiry } from './inquiry.model.js';
 
+// ─── Handlers ───
 export const getInquiries = async (req, res) => {
   const { status } = req.query;
   const filter = status ? { status } : {};

@@ -1,5 +1,6 @@
 import { Guest } from './guest.model.js';
 
+// ─── Handlers ───
 export const getGuests = async (req, res) => {
   const { search } = req.query;
   const filter = search

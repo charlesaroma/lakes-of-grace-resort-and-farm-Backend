@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../../../core/middlewares/auth.middleware.js';
 import { getInquiries, getInquiry, createInquiry, updateInquiry, deleteInquiry } from './inquiry.controller.js';
 
+// ─── Router ───
 const router = Router();
 
 router.get('/', requireAuth, getInquiries);

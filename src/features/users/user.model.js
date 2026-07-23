@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 
+// ─── Constants ───
 const VALID_ROLES = ['staff', 'admin', 'manager', 'system_developer'];
 
+// ─── Schema ───
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true, lowercase: true },

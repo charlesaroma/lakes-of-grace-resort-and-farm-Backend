@@ -1,5 +1,6 @@
 import { verifyAccessToken } from '../../features/auth/token.utils.js';
 
+// ─── Auth Middleware ───
 export const requireAuth = (req, res, next) => {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {

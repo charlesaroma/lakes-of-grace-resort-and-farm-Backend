@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { env } from './env.js';
 
+// ─── Database Connection ───
 export const connectDB = async () => {
   try {
     await mongoose.connect(env.MONGO_URI);

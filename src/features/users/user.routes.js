@@ -4,6 +4,7 @@ import {
 } from './user.controller.js';
 import { requireAuth, requireRole } from '../../core/middlewares/auth.middleware.js';
 
+// ─── Router ───
 const router = Router();
 
 router.get('/me', requireAuth, getProfile);

@@ -2,6 +2,7 @@ import { Booking } from '../crm/bookings/booking.model.js';
 import { Inquiry } from '../crm/inquiries/inquiry.model.js';
 import { Cottage } from '../crm/cottages/cottage.model.js';
 
+// ─── Handler ───
 export const getMetrics = async (req, res) => {
   const [
     revenueResult,

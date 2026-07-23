@@ -1,6 +1,7 @@
 import { Cottage } from './cottage.model.js';
 import { Booking } from '../bookings/booking.model.js';
 
+// ─── Handlers ───
 export const getOccupancy = async (req, res) => {
   const cottages = await Cottage.find();
   const now = new Date();

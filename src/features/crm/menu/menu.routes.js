@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../../../core/middlewares/auth.middleware.js';
 import { getMenuItems, getMenuItem, createMenuItem, updateMenuItem, deleteMenuItem } from './menu.controller.js';
 
+// ─── Router ───
 const router = Router();
 
 router.get('/', requireAuth, getMenuItems);

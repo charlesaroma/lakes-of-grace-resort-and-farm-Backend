@@ -1,6 +1,7 @@
 import { env } from '../../config/env.js';
 
 /**
+ * Pesapal IPN Handler
  * Handles Pesapal Instant Payment Notifications (IPN).
  * Pesapal calls this URL when a payment status changes.
  */

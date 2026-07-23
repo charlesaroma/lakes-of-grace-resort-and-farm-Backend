@@ -1,6 +1,7 @@
 import express from 'express';
 import { handlePesapalIPN } from './payment.webhook.js';
 
+// ─── Router ───
 const router = express.Router();
 
 // Pesapal IPN endpoint

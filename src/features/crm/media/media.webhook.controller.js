@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { Media } from './media.model.js';
 import { env } from '../../../config/env.js';
 
+// ─── Helpers ───
 function verifySignature(rawBody, signature) {
   const hmac = crypto.createHmac('sha256', env.IMAGEKIT_WEBHOOK_SECRET);
   hmac.update(rawBody);
@@ -13,6 +14,7 @@ function verifySignature(rawBody, signature) {
   }
 }
 
+// ─── Handler ───
 export const handleWebhook = async (req, res) => {
   const signature = req.headers['x-ik-signature'];
   if (!signature || !verifySignature(req.body, signature)) {
