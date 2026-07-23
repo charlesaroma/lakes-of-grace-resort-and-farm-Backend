@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../../../core/middlewares/auth.middleware.js';
 import {
   getPublicReviews,
+  getHomePageReviews,
   getReviews,
   submitReview,
   getReview,
@@ -12,6 +13,7 @@ import {
 const router = Router();
 
 router.get('/public', getPublicReviews);
+router.get('/home', getHomePageReviews);
 router.post('/public', submitReview);
 
 router.get('/', requireAuth, getReviews);

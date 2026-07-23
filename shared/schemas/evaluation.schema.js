@@ -1,0 +1,60 @@
+import { z } from 'zod';
+
+const ratingEnum = z.enum(['Very Happy', 'Happy', 'Satisfied', 'Sad']);
+const occupancyEnum = z.enum([
+  'Single',
+  'Double Couple',
+  'Double Twin',
+  'Couple with Children',
+  'Single with Children',
+]);
+
+export const createEvaluationSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  gender: z.enum(['Female', 'Male']).optional(),
+  phone: z.string().optional().default(''),
+  email: z.string().email().optional().or(z.literal('')),
+  physicalAddress: z.string().optional().default(''),
+  country: z.string().optional().default(''),
+  arrivalDate: z.string().optional().default(''),
+  arrivalTime: z.string().optional().default(''),
+  departureDate: z.string().optional().default(''),
+  departureTime: z.string().optional().default(''),
+  occupancy: occupancyEnum.optional(),
+  numberOfChildren: z.number().int().min(0).optional().default(0),
+  referralSource: z.string().optional().default(''),
+  staffPerformance: ratingEnum.optional(),
+  accommodations: ratingEnum.optional(),
+  propertyEnvironment: ratingEnum.optional(),
+  diningCatering: ratingEnum.optional(),
+  recreationSafety: ratingEnum.optional(),
+  frontDeskOperations: ratingEnum.optional(),
+  generalComments: z.string().optional().default(''),
+  suggestions: z.string().optional().default(''),
+});
+
+export const updateEvaluationSchema = z.object({
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  gender: z.enum(['Female', 'Male']).optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  physicalAddress: z.string().optional(),
+  country: z.string().optional(),
+  arrivalDate: z.string().optional(),
+  arrivalTime: z.string().optional(),
+  departureDate: z.string().optional(),
+  departureTime: z.string().optional(),
+  occupancy: occupancyEnum.optional(),
+  numberOfChildren: z.number().int().min(0).optional(),
+  referralSource: z.string().optional(),
+  staffPerformance: ratingEnum.optional(),
+  accommodations: ratingEnum.optional(),
+  propertyEnvironment: ratingEnum.optional(),
+  diningCatering: ratingEnum.optional(),
+  recreationSafety: ratingEnum.optional(),
+  frontDeskOperations: ratingEnum.optional(),
+  generalComments: z.string().optional(),
+  suggestions: z.string().optional(),
+});

@@ -14,13 +14,26 @@ export const getPublicReviews = async (req, res) => {
   res.json({ items, total, totalPages: Math.ceil(total / limitNum), page: pageNum });
 };
 
+export const getHomePageReviews = async (req, res) => {
+  const { limit = 10 } = req.query;
+  const limitNum = Math.max(1, Math.min(50, parseInt(limit)));
+  const [items, total] = await Promise.all([
+    Review.find({ status: 'Published', showOnHomePage: true })
+      .sort({ createdAt: -1 })
+      .limit(limitNum),
+    Review.countDocuments({ status: 'Published', showOnHomePage: true }),
+  ]);
+  res.json({ items, total });
+};
+
 export const getReviews = async (req, res) => {
   const { status, search, page = 1, limit = 20 } = req.query;
   const filter = {};
   if (status) filter.status = status;
   if (search) {
     filter.$or = [
-      { guestName: { $regex: search, $options: 'i' } },
+      { firstName: { $regex: search, $options: 'i' } },
+      { lastName: { $regex: search, $options: 'i' } },
       { comment: { $regex: search, $options: 'i' } },
       { title: { $regex: search, $options: 'i' } },
     ];
@@ -55,16 +68,20 @@ export const updateReview = async (req, res) => {
   const review = await Review.findByIdAndUpdate(req.params.id, result.data, { new: true, runValidators: true });
   if (!review) return res.status(404).json({ message: 'Review not found' });
 
-  if (result.data.status) {
+  if (result.data.status || 'showOnHomePage' in (result.data || {})) {
     await AuditLog.create({
-      action: 'Review Status Changed',
+      action: result.data.status ? 'Review Status Changed' : 'Review Updated',
       entityType: 'Review',
       entityId: review._id,
       actorId: req.userId,
-      changes: { status: result.data.status, guestName: review.guestName },
+      changes: {
+        ...(result.data.status ? { status: result.data.status } : {}),
+        ...('showOnHomePage' in result.data ? { showOnHomePage: result.data.showOnHomePage } : {}),
+        guestName: `${review.firstName} ${review.lastName}`,
+      },
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
-      severity: result.data.status === 'Published' ? 'Info' : 'Warning',
+      severity: result.data.status === 'Published' ? 'Info' : result.data.status === 'Rejected' ? 'Warning' : 'Info',
     });
   } else {
     await AuditLog.create({
@@ -89,7 +106,7 @@ export const deleteReview = async (req, res) => {
     entityType: 'Review',
     entityId: req.params.id,
     actorId: req.userId,
-    changes: { guestName: review.guestName },
+    changes: { guestName: `${review.firstName} ${review.lastName}` },
     ipAddress: req.ip,
     userAgent: req.get('user-agent'),
     severity: 'Warning',
