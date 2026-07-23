@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lakes of Grace — API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --forest:   #0D2118;
+      --grove:    #153020;
+      --linen:    #F7F3EC;
+      --linen-dim:#EDE9E1;
+      --sage:     #C8D8C2;
+      --green:    #3A7D44;
+      --green-lt: #5CA567;
+      --amber:    #C9873A;
+      --ink:      #1A2E22;
+      --stone:    #7A8C7D;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--forest);
+      font-family: 'DM Mono', monospace;
+      color: var(--linen);
+      overflow-x: hidden;
+    }
+
+    #lake {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .scene {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+
+    .card {
+      background: var(--linen);
+      color: var(--ink);
+      border-radius: 4px;
+      max-width: 520px;
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card-top {
+      background: var(--grove);
+      padding: 32px 40px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-top::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      opacity: 0.5;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .logo-img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(200,216,194,0.2);
+    }
+
+    .logo-text {
+      font-family: 'Cormorant Garant', serif;
+      font-weight: 300;
+      font-size: 18px;
+      letter-spacing: 0.12em;
+      color: var(--sage);
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border: 1px solid rgba(90,165,103,0.35);
+      border-radius: 2px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--green-lt);
+    }
+
+    .pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green-lt);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .card-body {
+      padding: 36px 40px 40px;
+    }
+
+    .headline {
+      font-family: 'Cormorant Garant', serif;
+      font-weight: 400;
+      font-size: 42px;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .headline em {
+      font-style: italic;
+      color: var(--green);
+    }
+
+    .subline {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      color: var(--stone);
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--linen-dim);
+      border: 1px solid var(--linen-dim);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    .stat {
+      background: var(--linen);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--stone);
+    }
+
+    .stat-value {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--ink);
+    }
+
+    .stat-value.online { color: #2E7D3F; }
+
+    .divider {
+      height: 1px;
+      background: var(--linen-dim);
+      margin-bottom: 24px;
+    }
+
+    .contact {
+      font-size: 12px;
+      color: var(--stone);
+      letter-spacing: 0.04em;
+    }
+
+    .contact a {
+      color: var(--amber);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .contact a:hover { border-color: var(--amber); }
+
+    .footer {
+      margin-top: 32px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: rgba(200,216,194,0.35);
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 480px) {
+      .card-top, .card-body { padding-left: 24px; padding-right: 24px; }
+      .headline { font-size: 34px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pulse { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="lake"></canvas>
+
+  <div class="scene">
+    <div class="card">
+
+      <div class="card-top">
+        <div class="logo-row">
+          <img class="logo-img"
+               src="https://ik.imagekit.io/6holewh07/logo.png?tr=w-120,h-120,fo-auto"
+               alt="Lakes of Grace">
+          <span class="logo-text">Lakes of Grace</span>
+        </div>
+        <div class="status-pill">
+          <span class="pulse" aria-hidden="true"></span>
+          All systems operational
+        </div>
+      </div>
+
+      <div class="card-body">
+        <h1 class="headline">Server is <em>live.</em></h1>
+        <p class="subline">The Lakes of Grace backend is running<br>and ready to serve requests.</p>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Status</span>
+            <span class="stat-value online">Online</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Version</span>
+            <span class="stat-value">1.0.0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Environment</span>
+            <span class="stat-value">__ENVIRONMENT__</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <p class="contact">
+          For inquiries — <a href="mailto:info@raijintechhub.com">info@raijintechhub.com</a>
+        </p>
+      </div>
+
+    </div>
+
+    <p class="footer">Lakes of Grace Resort &middot; Backend API</p>
+  </div>
+
+  <script>
+    var canvas = document.getElementById('lake');
+    var ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    var RIPPLES = [];
+    var RIPPLE_COUNT = 6;
+    var W = function() { return canvas.width; };
+    var H = function() { return canvas.height; };
+
+    function makeRipple(i) {
+      return {
+        x:       W() * (0.1 + Math.random() * 0.8),
+        y:       H() * (0.55 + Math.random() * 0.4),
+        r:       0,
+        maxR:    80 + Math.random() * 120,
+        opacity: 0.18 + Math.random() * 0.14,
+        speed:   0.28 + Math.random() * 0.22,
+        delay:   i * (3200 / RIPPLE_COUNT),
+        born:    performance.now() + i * (3200 / RIPPLE_COUNT),
+      };
+    }
+
+    for (var i = 0; i < RIPPLE_COUNT; i++) RIPPLES.push(makeRipple(i));
+
+    function drawRipple(r, now) {
+      if (now < r.born) return;
+      var age = now - r.born;
+      var t   = Math.min(age / (r.maxR / r.speed * 16.67), 1);
+      var radius = t * r.maxR;
+      var alpha  = r.opacity * (1 - t);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(r.x, r.y, radius, radius * 0.28, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(90,165,103,' + alpha + ')';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      if (t >= 1) {
+        Object.assign(r, {
+          x:    W() * (0.1 + Math.random() * 0.8),
+          y:    H() * (0.55 + Math.random() * 0.4),
+          maxR: 80 + Math.random() * 120,
+          opacity: 0.18 + Math.random() * 0.14,
+          speed:   0.28 + Math.random() * 0.22,
+          born: now + Math.random() * 1200,
+        });
+      }
+    }
+
+    function drawHorizon() {
+      var y = H() * 0.58;
+      var grad = ctx.createLinearGradient(0, y - 40, 0, y + 40);
+      grad.addColorStop(0, 'rgba(21,48,32,0)');
+      grad.addColorStop(0.5, 'rgba(21,48,32,0.55)');
+      grad.addColorStop(1, 'rgba(10,22,14,0.85)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, y - 40, W(), H() - (y - 40));
+    }
+
+    function drawStars() {
+      ctx.save();
+      for (var i = 0; i < 55; i++) {
+        var sx = (i * 137.508 * W()) % W();
+        var sy = ((i * 97.3) % (H() * 0.52));
+        var a  = 0.1 + (i % 5) * 0.06;
+        var r  = 0.5 + (i % 3) * 0.4;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(200,216,194,' + a + ')';
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function tick(now) {
+      ctx.clearRect(0, 0, W(), H());
+      drawStars();
+      drawHorizon();
+      RIPPLES.forEach(function(r) { drawRipple(r, now); });
+      requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -5,6 +8,12 @@ import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const statusHtml = readFileSync(join(__dirname, 'views', 'status.html'), 'utf-8')
+  .replace('__ENVIRONMENT__', env.NODE_ENV || 'development');
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -29,7 +38,17 @@ import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'img-src':    ["'self'", 'data:', 'https://ik.imagekit.io'],
+      'font-src':   ["'self'", 'https://fonts.gstatic.com'],
+      'style-src':  ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+    },
+  },
+}));
+
 const allowedOrigins = env.FRONTEND_URL.split(',').map(s => s.trim());
 app.use(cors({
   origin: (origin, callback) => {
@@ -75,7 +94,9 @@ app.use('/api/crm/dashboard', dashboardRoutes);
 
 app.use('/api/media', publicRoutes);
 
-app.get('/', (req, res) => res.json({ name: 'Lakes of Grace API', version: '1.0.0', health: '/health' }));
+app.get('/', (req, res) => {
+  res.type('html').send(statusHtml);
+});
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use((err, req, res, next) => {
