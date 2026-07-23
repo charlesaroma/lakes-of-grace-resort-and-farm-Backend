@@ -7,7 +7,7 @@ const auditLogSchema = new mongoose.Schema({
   entityType: {
     type: String,
     required: true,
-    enum: ['User', 'Booking', 'Lead', 'System', 'Payment', 'Stock', 'Menu', 'Guest', 'Media', 'Inquiry', 'TagConfig'],
+    enum: ['User', 'Booking', 'Lead', 'System', 'Payment', 'Stock', 'Menu', 'Guest', 'Media', 'Inquiry', 'TagConfig', 'Room', 'Review', 'CheckIn', 'Guideline', 'ConferenceHall', 'Notification'],
   },
   entityId: { type: mongoose.Schema.Types.ObjectId },
   actorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
