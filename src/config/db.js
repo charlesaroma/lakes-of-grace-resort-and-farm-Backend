@@ -1,10 +1,8 @@
-import mongoose from 'mongoose';
-import { env } from './env.js';
+import { prisma } from '../lib/prisma.js';
 
-// ─── Database Connection ───
 export const connectDB = async () => {
   try {
-    await mongoose.connect(env.MONGO_URI);
+    await prisma.$connect();
     console.log('✅ MongoDB connected');
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);

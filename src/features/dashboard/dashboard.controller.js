@@ -1,8 +1,5 @@
-import { Booking } from '../crm/bookings/booking.model.js';
-import { Inquiry } from '../crm/inquiries/inquiry.model.js';
-import { Cottage } from '../crm/cottages/cottage.model.js';
+import prisma from '../../lib/prisma.js';
 
-// ─── Handler ───
 export const getMetrics = async (req, res) => {
   const [
     revenueResult,
@@ -10,16 +7,14 @@ export const getMetrics = async (req, res) => {
     newInquiries,
     totalCottages,
   ] = await Promise.all([
-    Booking.aggregate([
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
-    ]),
-    Booking.countDocuments({ status: { $in: ['Confirmed', 'Checked-In'] } }),
-    Inquiry.countDocuments({ status: 'New' }),
-    Cottage.countDocuments(),
+    prisma.booking.aggregate({ _sum: { totalAmount: true } }),
+    prisma.booking.count({ where: { status: { in: ['Confirmed', 'Checked-In'] } } }),
+    prisma.inquiry.count({ where: { status: 'New' } }),
+    prisma.cottage.count(),
   ]);
 
   res.json({
-    totalRevenue: revenueResult[0]?.total || 0,
+    totalRevenue: revenueResult._sum.totalAmount || 0,
     activeBookings,
     newInquiries,
     occupancyRate: totalCottages > 0 ? Math.round((activeBookings / totalCottages) * 100) : 0,

@@ -1,32 +1,32 @@
-import { Inquiry } from './inquiry.model.js';
+import { prisma } from '../../../lib/prisma.js';
 
-// ─── Handlers ───
 export const getInquiries = async (req, res) => {
   const { status } = req.query;
-  const filter = status ? { status } : {};
-  const inquiries = await Inquiry.find(filter).sort({ createdAt: -1 });
+  const where = status ? { status } : {};
+  const inquiries = await prisma.inquiry.findMany({ where, orderBy: { createdAt: 'desc' } });
   res.json(inquiries);
 };
 
 export const getInquiry = async (req, res) => {
-  const inquiry = await Inquiry.findById(req.params.id);
+  const inquiry = await prisma.inquiry.findUnique({ where: { id: req.params.id } });
   if (!inquiry) return res.status(404).json({ message: 'Inquiry not found' });
   res.json(inquiry);
 };
 
 export const createInquiry = async (req, res) => {
-  const inquiry = await Inquiry.create(req.body);
+  const inquiry = await prisma.inquiry.create({ data: req.body });
   res.status(201).json(inquiry);
 };
 
 export const updateInquiry = async (req, res) => {
-  const inquiry = await Inquiry.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const inquiry = await prisma.inquiry.update({ where: { id: req.params.id }, data: req.body });
   if (!inquiry) return res.status(404).json({ message: 'Inquiry not found' });
   res.json(inquiry);
 };
 
 export const deleteInquiry = async (req, res) => {
-  const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
+  const inquiry = await prisma.inquiry.findUnique({ where: { id: req.params.id } });
   if (!inquiry) return res.status(404).json({ message: 'Inquiry not found' });
+  await prisma.inquiry.delete({ where: { id: req.params.id } });
   res.json({ message: 'Inquiry deleted' });
 };

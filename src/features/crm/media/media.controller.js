@@ -1,34 +1,39 @@
 import crypto from 'node:crypto';
 import ImageKit from '@imagekit/nodejs';
-import { Media } from './media.model.js';
-import { TagConfig } from './tagConfig.model.js';
-import { AuditLog } from '../../../core/audit/auditLog.model.js';
+import prisma from '../../../lib/prisma.js';
 import { env } from '../../../config/env.js';
 
-// ─── ImageKit Client ───
 const imagekit = new ImageKit({
   publicKey: env.IMAGEKIT_PUBLIC_KEY,
   privateKey: env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: env.IMAGEKIT_URL_ENDPOINT,
 });
 
-// ─── Handlers ───
+const ALLOWED_MEDIA_FIELDS = ['tag', 'alt'];
+
+function pickMediaFields(body) {
+  const data = {};
+  for (const key of ALLOWED_MEDIA_FIELDS) {
+    if (body[key] !== undefined) data[key] = key === 'tag' ? String(body[key]).toLowerCase() : body[key];
+  }
+  return data;
+}
+
 export const getMedia = async (req, res) => {
   const { tag } = req.query;
-  const filter = tag ? { tag: { $regex: `^${tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' } } : {};
-  const items = await Media.find(filter).sort({ createdAt: -1 }).lean();
+  const where = tag ? { tag: { equals: tag, mode: 'insensitive' } } : {};
+  const items = await prisma.media.findMany({ where, orderBy: { createdAt: 'desc' } });
   res.set('Cache-Control', 'public, max-age=300');
   res.json(items);
 };
 
 export const getMediaItem = async (req, res) => {
-  const item = await Media.findById(req.params.id);
+  const item = await prisma.media.findUnique({ where: { id: req.params.id } });
   if (!item) return res.status(404).json({ message: 'Media not found' });
   res.json(item);
 };
 
-// ─── Constants ───
-const IMAGEKIT_MAX_BYTES = 25 * 1024 * 1024; // ImageKit free-tier limit
+const IMAGEKIT_MAX_BYTES = 25 * 1024 * 1024;
 
 export const createMedia = async (req, res) => {
   const files = req.files;
@@ -54,12 +59,14 @@ export const createMedia = async (req, res) => {
         useUniqueFileName: true,
       });
 
-      const item = await Media.create({
-        url: uploadedFile.url,
-        fileId: uploadedFile.fileId,
-        tag,
-        size: `${(file.size / 1024).toFixed(0)} KB`,
-        alt: file.originalname.replace(/\.[^/.]+$/, ''),
+      const item = await prisma.media.create({
+        data: {
+          url: uploadedFile.url,
+          fileId: uploadedFile.fileId,
+          tag,
+          size: `${(file.size / 1024).toFixed(0)} KB`,
+          alt: file.originalname.replace(/\.[^/.]+$/, ''),
+        },
       });
 
       uploaded.push(item);
@@ -68,15 +75,17 @@ export const createMedia = async (req, res) => {
     }
   }
 
-  await AuditLog.create({
-    action: 'Media Upload',
-    entityType: 'Media',
-    entityId: uploaded.map((i) => i._id).join(','),
-    actorId: req.userId,
-    changes: { urls: uploaded.map((i) => i.url), tag },
-    ipAddress: req.ip,
-    userAgent: req.get('user-agent'),
-    severity: 'Info',
+  await prisma.auditLog.create({
+    data: {
+      action: 'Media Upload',
+      entityType: 'Media',
+      entityId: uploaded.map((i) => i.id).join(','),
+      actorId: req.userId,
+      changes: { urls: uploaded.map((i) => i.url), tag },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
   });
 
   const result = uploaded.length === 1 ? uploaded[0] : uploaded;
@@ -90,8 +99,9 @@ export const createMedia = async (req, res) => {
 };
 
 export const deleteMedia = async (req, res) => {
-  const item = await Media.findByIdAndDelete(req.params.id);
+  const item = await prisma.media.findUnique({ where: { id: req.params.id } });
   if (!item) return res.status(404).json({ message: 'Media not found' });
+  await prisma.media.delete({ where: { id: req.params.id } });
 
   if (item.fileId) {
     try {
@@ -101,15 +111,17 @@ export const deleteMedia = async (req, res) => {
     }
   }
 
-  await AuditLog.create({
-    action: 'Media Deleted',
-    entityType: 'Media',
-    entityId: req.params.id,
-    actorId: req.userId,
-    changes: { url: item.url },
-    ipAddress: req.ip,
-    userAgent: req.get('user-agent'),
-    severity: 'Warning',
+  await prisma.auditLog.create({
+    data: {
+      action: 'Media Deleted',
+      entityType: 'Media',
+      entityId: req.params.id,
+      actorId: req.userId,
+      changes: { url: item.url },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Warning',
+    },
   });
 
   req.app.get('io').emit('media:deleted', { id: req.params.id });
@@ -134,22 +146,21 @@ export const getAuthParams = (req, res) => {
 };
 
 export const updateMedia = async (req, res) => {
-  const item = await Media.findByIdAndUpdate(
-    req.params.id,
-    { $set: req.body },
-    { new: true, runValidators: true }
-  );
+  const data = pickMediaFields(req.body);
+  const item = await prisma.media.update({ where: { id: req.params.id }, data });
   if (!item) return res.status(404).json({ message: 'Media not found' });
 
-  await AuditLog.create({
-    action: 'Media Updated',
-    entityType: 'Media',
-    entityId: req.params.id,
-    actorId: req.userId,
-    changes: req.body,
-    ipAddress: req.ip,
-    userAgent: req.get('user-agent'),
-    severity: 'Info',
+  await prisma.auditLog.create({
+    data: {
+      action: 'Media Updated',
+      entityType: 'Media',
+      entityId: req.params.id,
+      actorId: req.userId,
+      changes: req.body,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
   });
 
   req.app.get('io').emit('media:updated', item);
@@ -162,23 +173,27 @@ export const recordMedia = async (req, res) => {
     return res.status(400).json({ message: 'url is required' });
   }
 
-  const item = await Media.create({
-    url,
-    fileId: fileId || '',
-    tag: (tag || 'cottages').toLowerCase(),
-    size: size ? `${(parseInt(size) / 1024).toFixed(0)} KB` : '',
-    alt: (name || '').replace(/\.[^/.]+$/, ''),
+  const item = await prisma.media.create({
+    data: {
+      url,
+      fileId: fileId || '',
+      tag: (tag || 'cottages').toLowerCase(),
+      size: size ? `${(parseInt(size) / 1024).toFixed(0)} KB` : '',
+      alt: (name || '').replace(/\.[^/.]+$/, ''),
+    },
   });
 
-  await AuditLog.create({
-    action: 'Media Upload',
-    entityType: 'Media',
-    entityId: item._id,
-    actorId: req.userId,
-    changes: { url: item.url, tag: item.tag },
-    ipAddress: req.ip,
-    userAgent: req.get('user-agent'),
-    severity: 'Info',
+  await prisma.auditLog.create({
+    data: {
+      action: 'Media Upload',
+      entityType: 'Media',
+      entityId: item.id,
+      actorId: req.userId,
+      changes: { url: item.url, tag: item.tag },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
   });
 
   req.app.get('io').emit('media:created', item);
@@ -186,13 +201,12 @@ export const recordMedia = async (req, res) => {
   res.status(201).json(item);
 };
 
-// ─── Tag Config ───
 const DEFAULT_TAGS = ['cottages', 'rooms', 'dining', 'activities'];
 
 export const getTagConfig = async (req, res) => {
-  let config = await TagConfig.findOne();
+  let config = await prisma.tagConfig.findFirst();
   if (!config) {
-    config = await TagConfig.create({ tags: DEFAULT_TAGS });
+    config = await prisma.tagConfig.create({ data: { tags: DEFAULT_TAGS } });
   }
   res.json(config);
 };
@@ -203,22 +217,23 @@ export const updateTagConfig = async (req, res) => {
     return res.status(400).json({ message: 'tags must be an array of strings' });
   }
 
-  let config = await TagConfig.findOne();
+  let config = await prisma.tagConfig.findFirst();
   if (!config) {
-    config = await TagConfig.create({ tags });
+    config = await prisma.tagConfig.create({ data: { tags } });
   } else {
-    config.tags = tags;
-    await config.save();
+    config = await prisma.tagConfig.update({ where: { id: config.id }, data: { tags } });
   }
 
-  await AuditLog.create({
-    action: 'Tag Config Updated',
-    entityType: 'TagConfig',
-    actorId: req.userId,
-    changes: { tags },
-    ipAddress: req.ip,
-    userAgent: req.get('user-agent'),
-    severity: 'Info',
+  await prisma.auditLog.create({
+    data: {
+      action: 'Tag Config Updated',
+      entityType: 'TagConfig',
+      actorId: req.userId,
+      changes: { tags },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
   });
 
   res.json(config);

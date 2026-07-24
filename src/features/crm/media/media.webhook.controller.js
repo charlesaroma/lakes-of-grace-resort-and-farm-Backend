@@ -1,8 +1,7 @@
 import crypto from 'node:crypto';
-import { Media } from './media.model.js';
+import { prisma } from '../../../lib/prisma.js';
 import { env } from '../../../config/env.js';
 
-// ─── Helpers ───
 function verifySignature(rawBody, signature) {
   const hmac = crypto.createHmac('sha256', env.IMAGEKIT_WEBHOOK_SECRET);
   hmac.update(rawBody);
@@ -14,7 +13,6 @@ function verifySignature(rawBody, signature) {
   }
 }
 
-// ─── Handler ───
 export const handleWebhook = async (req, res) => {
   const signature = req.headers['x-ik-signature'];
   if (!signature || !verifySignature(req.body, signature)) {
@@ -27,21 +25,23 @@ export const handleWebhook = async (req, res) => {
   switch (event) {
     case 'file.upload': {
       const tag = data.tags?.[0] || 'gallery';
-      const existing = await Media.findOne({ fileId: data.fileId });
+      const existing = await prisma.media.findUnique({ where: { fileId: data.fileId } });
       if (!existing) {
-        await Media.create({
-          url: data.url,
-          fileId: data.fileId,
-          tag,
-          size: `${(data.size / 1024).toFixed(0)} KB`,
-          alt: data.name.replace(/\.[^/.]+$/, ''),
+        await prisma.media.create({
+          data: {
+            url: data.url,
+            fileId: data.fileId,
+            tag,
+            size: `${(data.size / 1024).toFixed(0)} KB`,
+            alt: data.name.replace(/\.[^/.]+$/, ''),
+          },
         });
       }
       break;
     }
 
     case 'file.delete': {
-      await Media.findOneAndDelete({ fileId: data.fileId });
+      await prisma.media.deleteMany({ where: { fileId: data.fileId } });
       break;
     }
 

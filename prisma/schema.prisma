@@ -1,0 +1,418 @@
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGO_URI")
+}
+
+// ─── Enums ───
+
+enum UserRole {
+  staff
+  admin
+  manager
+  system_developer
+}
+
+enum RoomType {
+  Standard
+  Deluxe
+  Premium
+}
+
+enum RoomStatus {
+  Available
+  Booked
+  Maintenance
+  Cleaning
+}
+
+enum LeadStatus {
+  new
+  contacted
+  converted
+}
+
+enum ReviewStatus {
+  Published
+  Pending
+  Rejected
+}
+
+enum StockLedgerType {
+  restock
+  dispatch
+  adjustment
+}
+
+enum MenuStatus {
+  Active
+  Inactive
+}
+
+enum InquiryStatus {
+  New
+  Read
+  Replied
+  Closed
+}
+
+enum AuditLogSeverity {
+  Info
+  Warning
+  Security
+  Error
+}
+
+enum EntityType {
+  User
+  Booking
+  Lead
+  System
+  Payment
+  Stock
+  Menu
+  Guest
+  Media
+  Inquiry
+  TagConfig
+  Room
+  Review
+  CheckIn
+  Guideline
+  ConferenceHall
+  Notification
+}
+
+// ─── Models ───
+
+model User {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String    @default("staff")
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  stockLedgers StockLedger[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Booking {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  guestName       String
+  guestEmail      String
+  cottage         String
+  checkIn         DateTime
+  checkOut        DateTime
+  guests          Int      @default(1)
+  status          String   @default("Pending")
+  totalAmount     Float    @default(0)
+  phone           String?
+  specialRequests String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  checkInRecord CheckIn?
+
+  @@index([cottage, checkIn])
+  @@index([guestEmail, status])
+  @@map("bookings")
+}
+
+model Cottage {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String   @unique
+  label        String?
+  capacity     Int
+  pricePerNight Float
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("cottages")
+}
+
+model Room {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomNumber   String   @unique
+  roomType     String   @default("Standard")
+  status       String   @default("Available")
+  pricePerNight Float
+  capacity     Int      @default(2)
+  description  String?
+  amenities    String[]
+  images       String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("rooms")
+}
+
+model Lead {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  imageUrl  String?
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email, status])
+  @@map("leads")
+}
+
+model Guest {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String   @unique
+  phone         String?
+  totalBookings Int      @default(0)
+  lastStay      DateTime?
+  totalSpend    Float    @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("guests")
+}
+
+model Review {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName     String
+  lastName      String
+  rating        Int
+  title         String?
+  comment       String?
+  response      String?
+  status        String   @default("Published")
+  showOnHomePage Boolean @default(false)
+  images        String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, showOnHomePage, createdAt])
+  @@map("reviews")
+}
+
+model Evaluation {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName            String
+  lastName             String
+  gender               String?
+  phone                String?
+  email                String?
+  physicalAddress      String?
+  country              String?
+  arrivalDate          String?
+  arrivalTime          String?
+  departureDate        String?
+  departureTime        String?
+  occupancy            String?
+  numberOfChildren     Int?
+  referralSource       String?
+  staffPerformance     String?
+  accommodations       String?
+  propertyEnvironment  String?
+  diningCatering       String?
+  recreationSafety     String?
+  frontDeskOperations  String?
+  generalComments      String?
+  suggestions          String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([email, arrivalDate])
+  @@map("evaluations")
+}
+
+model CheckIn {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  guestName        String
+  guestPhone       String
+  roomNumber       String
+  bookingId        String?   @unique @db.ObjectId
+  checkInTime      DateTime
+  expectedCheckOut DateTime
+  actualCheckOut   DateTime?
+  status           String   @default("Checked-In")
+  idProof          String?
+  notes            String?
+  vehicleNumber    String?
+  numberOfGuests   Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([status, bookingId])
+  @@map("check_ins")
+}
+
+model Guideline {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  category    String
+  title       String
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, sortOrder])
+  @@map("guidelines")
+}
+
+model ConferenceHall {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  capacity    Int
+  description String?
+  amenities   String[]
+  images      String[]
+  pricePerDay Float
+  status      String   @default("Available")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("conference_halls")
+}
+
+model Notification {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  message   String
+  type      String    @default("Info")
+  category  String    @default("General")
+  link      String?
+  isRead    Boolean   @default(false)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([isRead, type, createdAt])
+  @@map("notifications")
+}
+
+model StockItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  item      String   @unique
+  category  String
+  quantity  Int      @default(0)
+  unit      String   @default("pieces")
+  threshold Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockLedgers StockLedger[]
+
+  @@map("stock_items")
+}
+
+model StockLedger {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  itemId     String @db.ObjectId
+  item       String
+  type       String   @default("restock")
+  quantity   Int
+  balance    Int
+  cost       Float    @default(0)
+  supplier   String?
+  department String?
+  purpose    String?
+  reason     String?
+  note       String?
+  userId     String? @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  stockItem StockItem @relation(fields: [itemId], references: [id])
+  user      User?     @relation(fields: [userId], references: [id])
+
+  @@index([itemId, createdAt])
+  @@map("stock_ledgers")
+}
+
+model MenuItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  category  String
+  price     Float
+  status    String   @default("Active")
+  description String?
+  group     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, status])
+  @@map("menu_items")
+}
+
+model Inquiry {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  status    String   @default("New")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("inquiries")
+}
+
+model Media {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  url       String
+  fileId    String   @unique
+  tag       String?
+  size      String?
+  alt       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tag, createdAt])
+  @@map("media")
+}
+
+model TagConfig {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tag_configs")
+}
+
+model AuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  action     String
+  details    String?
+  entityType String
+  entityId   String?
+  actorId    String? @db.ObjectId
+  actorName  String?
+  changes    Json?
+  severity   String   @default("Info")
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([severity, createdAt])
+  @@map("audit_logs")
+}

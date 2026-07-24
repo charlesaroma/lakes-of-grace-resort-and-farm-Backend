@@ -1,5 +1,4 @@
-import { Review } from './review.model.js';
-import { AuditLog } from '../../../core/audit/auditLog.model.js';
+import { prisma } from '../../../lib/prisma.js';
 import { createReviewSchema, updateReviewSchema } from '../../../../shared/schemas/review.schema.js';
 
 export const getPublicReviews = async (req, res) => {
@@ -7,9 +6,10 @@ export const getPublicReviews = async (req, res) => {
   const pageNum = Math.max(1, parseInt(page));
   const limitNum = Math.max(1, Math.min(50, parseInt(limit)));
   const skip = (pageNum - 1) * limitNum;
+  const where = { status: 'Published' };
   const [items, total] = await Promise.all([
-    Review.find({ status: 'Published' }).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
-    Review.countDocuments({ status: 'Published' }),
+    prisma.review.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: limitNum }),
+    prisma.review.count({ where }),
   ]);
   res.json({ items, total, totalPages: Math.ceil(total / limitNum), page: pageNum });
 };
@@ -17,33 +17,32 @@ export const getPublicReviews = async (req, res) => {
 export const getHomePageReviews = async (req, res) => {
   const { limit = 10 } = req.query;
   const limitNum = Math.max(1, Math.min(50, parseInt(limit)));
+  const where = { status: 'Published', showOnHomePage: true };
   const [items, total] = await Promise.all([
-    Review.find({ status: 'Published', showOnHomePage: true })
-      .sort({ createdAt: -1 })
-      .limit(limitNum),
-    Review.countDocuments({ status: 'Published', showOnHomePage: true }),
+    prisma.review.findMany({ where, orderBy: { createdAt: 'desc' }, take: limitNum }),
+    prisma.review.count({ where }),
   ]);
   res.json({ items, total });
 };
 
 export const getReviews = async (req, res) => {
   const { status, search, page = 1, limit = 20 } = req.query;
-  const filter = {};
-  if (status) filter.status = status;
+  const where = {};
+  if (status) where.status = status;
   if (search) {
-    filter.$or = [
-      { firstName: { $regex: search, $options: 'i' } },
-      { lastName: { $regex: search, $options: 'i' } },
-      { comment: { $regex: search, $options: 'i' } },
-      { title: { $regex: search, $options: 'i' } },
+    where.OR = [
+      { firstName: { contains: search, mode: 'insensitive' } },
+      { lastName: { contains: search, mode: 'insensitive' } },
+      { comment: { contains: search, mode: 'insensitive' } },
+      { title: { contains: search, mode: 'insensitive' } },
     ];
   }
   const pageNum = Math.max(1, parseInt(page));
   const limitNum = Math.max(1, Math.min(100, parseInt(limit)));
   const skip = (pageNum - 1) * limitNum;
   const [items, total] = await Promise.all([
-    Review.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
-    Review.countDocuments(filter),
+    prisma.review.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: limitNum }),
+    prisma.review.count({ where }),
   ]);
   res.json({ items, total, totalPages: Math.ceil(total / limitNum), page: pageNum });
 };
@@ -51,12 +50,12 @@ export const getReviews = async (req, res) => {
 export const submitReview = async (req, res) => {
   const result = createReviewSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
-  const review = await Review.create(result.data);
+  const review = await prisma.review.create({ data: result.data });
   res.status(201).json(review);
 };
 
 export const getReview = async (req, res) => {
-  const review = await Review.findById(req.params.id);
+  const review = await prisma.review.findUnique({ where: { id: req.params.id } });
   if (!review) return res.status(404).json({ message: 'Review not found' });
   res.json(review);
 };
@@ -65,51 +64,94 @@ export const updateReview = async (req, res) => {
   const result = updateReviewSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
 
-  const review = await Review.findByIdAndUpdate(req.params.id, result.data, { new: true, runValidators: true });
+  const review = await prisma.review.update({ where: { id: req.params.id }, data: result.data });
   if (!review) return res.status(404).json({ message: 'Review not found' });
 
   if (result.data.status || 'showOnHomePage' in (result.data || {})) {
-    await AuditLog.create({
-      action: result.data.status ? 'Review Status Changed' : 'Review Updated',
-      entityType: 'Review',
-      entityId: review._id,
-      actorId: req.userId,
-      changes: {
-        ...(result.data.status ? { status: result.data.status } : {}),
-        ...('showOnHomePage' in result.data ? { showOnHomePage: result.data.showOnHomePage } : {}),
-        guestName: `${review.firstName} ${review.lastName}`,
+    await prisma.auditLog.create({
+      data: {
+        action: result.data.status ? 'Review Status Changed' : 'Review Updated',
+        entityType: 'Review',
+        entityId: review.id,
+        actorId: req.userId,
+        changes: {
+          ...(result.data.status ? { status: result.data.status } : {}),
+          ...('showOnHomePage' in result.data ? { showOnHomePage: result.data.showOnHomePage } : {}),
+          guestName: `${review.firstName} ${review.lastName}`,
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        severity: result.data.status === 'Published' ? 'Info' : result.data.status === 'Rejected' ? 'Warning' : 'Info',
       },
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
-      severity: result.data.status === 'Published' ? 'Info' : result.data.status === 'Rejected' ? 'Warning' : 'Info',
     });
   } else {
-    await AuditLog.create({
-      action: 'Review Updated',
-      entityType: 'Review',
-      entityId: review._id,
-      actorId: req.userId,
-      changes: result.data,
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
-      severity: 'Info',
+    await prisma.auditLog.create({
+      data: {
+        action: 'Review Updated',
+        entityType: 'Review',
+        entityId: review.id,
+        actorId: req.userId,
+        changes: result.data,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        severity: 'Info',
+      },
     });
   }
   res.json(review);
 };
 
-export const deleteReview = async (req, res) => {
-  const review = await Review.findByIdAndDelete(req.params.id);
+export const approveReview = async (req, res) => {
+  const review = await prisma.review.update({ where: { id: req.params.id }, data: { status: 'Published' } });
   if (!review) return res.status(404).json({ message: 'Review not found' });
-  await AuditLog.create({
-    action: 'Review Deleted',
-    entityType: 'Review',
-    entityId: req.params.id,
-    actorId: req.userId,
-    changes: { guestName: `${review.firstName} ${review.lastName}` },
-    ipAddress: req.ip,
-    userAgent: req.get('user-agent'),
-    severity: 'Warning',
+  await prisma.auditLog.create({
+    data: {
+      action: 'Review Approved',
+      entityType: 'Review',
+      entityId: review.id,
+      actorId: req.userId,
+      changes: { status: 'Published', guestName: `${review.firstName} ${review.lastName}` },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
+  });
+  res.json(review);
+};
+
+export const rejectReview = async (req, res) => {
+  const review = await prisma.review.update({ where: { id: req.params.id }, data: { status: 'Rejected' } });
+  if (!review) return res.status(404).json({ message: 'Review not found' });
+  await prisma.auditLog.create({
+    data: {
+      action: 'Review Rejected',
+      entityType: 'Review',
+      entityId: review.id,
+      actorId: req.userId,
+      changes: { status: 'Rejected', guestName: `${review.firstName} ${review.lastName}` },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Warning',
+    },
+  });
+  res.json(review);
+};
+
+export const deleteReview = async (req, res) => {
+  const review = await prisma.review.findUnique({ where: { id: req.params.id } });
+  if (!review) return res.status(404).json({ message: 'Review not found' });
+  await prisma.review.delete({ where: { id: req.params.id } });
+  await prisma.auditLog.create({
+    data: {
+      action: 'Review Deleted',
+      entityType: 'Review',
+      entityId: req.params.id,
+      actorId: req.userId,
+      changes: { guestName: `${review.firstName} ${review.lastName}` },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Warning',
+    },
   });
   res.json({ message: 'Review deleted' });
 };
