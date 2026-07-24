@@ -1,0 +1,202 @@
+[
+  {
+    "category": "Breakfast Selection",
+    "items": [
+      { "name": "Continental Breakfast", "description": "Freshly squeezed juice, fruit platter, choice of cereal or yoghurt, baker's basket, and tea or coffee", "price": "35,000/=" },
+      { "name": "Lakes of Grace Full Breakfast", "description": "Two eggs (any style), sausages, bacon, baked beans, grilled tomatoes, mushrooms, home fries, baker's basket, juice, and tea or coffee", "price": "45,000/=" },
+      { "name": "Spanish Omelet", "description": "Three eggs with bell peppers, onions, and tomatoes, served with toast and home fries", "price": "25,000/=" },
+      { "name": "Pancakes or Waffles", "description": "Served with maple syrup or honey and a fruit garnish", "price": "20,000/=" },
+      { "name": "Fruit Platter", "description": "A seasonal selection of fresh tropical fruits", "price": "15,000/=" }
+    ]
+  },
+  {
+    "category": "Starters",
+    "items": [
+      { "name": "Soup of the Day", "description": "Served with freshly baked bread rolls", "price": "15,000/=" },
+      { "name": "Chapati", "description": "Served with gravy", "price": "15,000/=" },
+      { "name": "Samosas", "description": "3 pieces (Chicken, Beef, or Veggie)", "price": "10,000/=" },
+      { "name": "Chips Masala", "description": "Seasoned with masala sauce", "price": "25,000/=" },
+      { "name": "Vegetable Spring Rolls", "description": "", "price": "10,000/=" },
+      { "name": "Beef Skewers", "description": "Grilled prime beef cubes", "price": "35,000/=" },
+      { "name": "Chicken Skewers", "description": "Grilled chicken breast cubes", "price": "35,000/=" }
+    ]
+  },
+  {
+    "category": "Salads",
+    "items": [
+      { "name": "Mediterranean Chicken Salad", "description": "A bed of lettuce with grilled chicken flakes, Parmesan cheese, croutons, and black olives", "price": "30,000/=" },
+      { "name": "Chicken Avo and Bacon Salad", "description": "Stir-fried chicken strips, bacon, and avocado on a bed of house salad with your choice of dressing", "price": "35,000/=" },
+      { "name": "Chicken Caesar", "description": "A classic chicken salad served with crunchy croutons and a creamy garlic dressing", "price": "35,000/=" },
+      { "name": "House Smoked Beef Salad", "description": "Prime strips of beef on a bed of house salad with a touch of sweet peppers", "price": "25,000/=" },
+      { "name": "Monte Cristo Salad", "description": "Grilled beef strips, back bacon, fresh avocados, feta cheese, cherry tomatoes, and green onion tossed with crisp romaine lettuce and honey lime mustard dressing", "price": "35,000/=" },
+      { "name": "Sea Base Salad", "description": "Fried tilapia dices topped with baby Gouda cheese served on a base of mixed romaine lettuce and tropical seasonal vegetables with a dill lime mayo sauce", "price": "35,000/=" }
+    ],
+    "addons": [
+      { "name": "Beef Strips", "price": "10,000/=" },
+      { "name": "Chicken Strips", "price": "10,000/=" },
+      { "name": "Feta Cheese", "price": "5,000/=" },
+      { "name": "Avocado", "price": "3,000/=" }
+    ]
+  },
+  {
+    "category": "Chicken",
+    "items": [
+      { "name": "Stuffed Whole Grilled Chicken", "description": "Whole chicken marinated overnight, baked sumptuously and served with vegetables and home fries", "price": "150,000/=" },
+      { "name": "Cajun Roast Half Chicken", "description": "half chicken marinated with herbs fine tuned with a touch of habanero chili (optional) served with roasted potatoes", "price": "75,000/=" },
+      { "name": "Double Chicken Breast", "description": "Boneless and skinless fillets grilled to perfection with a touch of Rosemary herbs served with plantains, and parsley potatoes", "price": "75,000/=" },
+      { "name": "BBQ Chicken Wings", "description": "Sweet & sour wings served with rice or french fries", "price": "35,000/=" },
+      { "name": "Grace Signature Crunchy Chicken Burger", "description": "Breaded chicken breast, spicy mayo, and coleslaw", "price": "35,000/=" },
+      { "name": "Chicken Lollipops / Drumsticks / Nuggets", "description": "", "price": "35,000/=" },
+      { "name": "Grilled Chicken", "description": "Grilled chicken seasoned to perfection with a selection of beautiful aromatic herbs and pickled cucumbers.", "price": "35,000/=" }
+    ]
+  },
+  {
+    "category": "Fish",
+    "items": [
+      { "name": "Whole Tilapia (Best Seller)", "description": "Large whole fish, deep-fried and finished with our \"magical sauce\" & lemon vinaigrette", "price": "50,000/=" },
+      { "name": "Wet Fried Fish", "description": "Whole tilapia fried and tossed in aromatic tomato soup", "price": "60,000/=" },
+      { "name": "Fish Fingers", "description": "Fresh tilapia fillets coated broad crumbs, served with french fries and dill scented tartar sauce", "price": "30,000/=" },
+      { "name": "Fish Florentine", "description": "Grilled fish fillet on a bed of creamy mushroom spinach", "price": "35,000/=" },
+      { "name": "Grilled Fish Fillet", "description": "Fillets of tilapia fish grilled to perfection and served with onion rings, fries, and dill creme fraiche", "price": "35,000/=" }
+    ]
+  },
+  {
+    "category": "Sizzlers",
+    "items": [
+      { "name": "Thai Sizzling Chicken", "description": "Chicken breast done with a touch of sesame seeds and Thai spices", "price": "50,000/=" },
+      { "name": "Beef Sizzlers", "description": "Julienne beef strips on a huge heap of caramelized onions and sweet peppers served with roasted potatoes", "price": "50,000/=" },
+      { "name": "Goat Sizzlers", "description": "Grilled to perfection, infused with hot mint flavors served veggies", "price": "50,000/=" },
+      { "name": "Fish Sizzlers", "description": "Grilled to perfection, infused with hot mint flavors served with veggies", "price": "50,000/=" }
+    ]
+  },
+  {
+    "category": "Goat, Steak and Pork",
+    "subCategories": [
+      {
+        "name": "Goat",
+        "items": [
+          { "name": "Goat Ribs", "description": "600g of our prime goat ribs tempered on a salamander grill served with parsely potatoes and our freshly prepared mint sauce", "price": "40,000/=" },
+          { "name": "Goat Mchomo (Kiswahili)", "description": "Pan-sautéed goat, fried Kenyan style (a must try) served with braised sukuma wiki and ugali", "price": "40,000/=" },
+          { "name": "Pilau Nyama Mbuzi", "description": "our fine and perfect selection of pure ground spices infused in rice with with prime sumptous goat chunks, served with kachumbali, and guacamole", "price": "40,000/=" }
+        ]
+      },
+      {
+        "name": "Steak",
+        "items": [
+          { "name": "Mushroom Steak", "description": "300gm of fillet steak grilled to your choice of perfection.", "price": "40,000/=" },
+          { "name": "Pepper Steak", "description": "300g of fillet steak grilled to perfection with a peppercorn crush", "price": "40,000/=" },
+          { "name": "Thai Beef Stir Fry", "description": "Julienne beef fillet infused in exotic Thailand Spices", "price": "40,000/=" }
+        ]
+      },
+      {
+        "name": "Pork Derivations",
+        "items": [
+          { "name": "Pork Ribs", "description": "Tender marinated pork ribs grilled and basted with honey and BBQ sauce, served with coleslaw and a side dish.", "price": "40,000/=" },
+          { "name": "Pork Chops", "description": "Succulent twin pork chops grilled to perfection with special herbs, served with your choice of sauce and a side dish.", "price": "40,000/=" },
+          { "name": "Pork Kikalaya", "description": "Fried pork cubes sautéed with onions, peppers, and local spices, served with a side of your choice.", "price": "40,000/=" }
+        ],
+        "addons": [
+          { "name": "1000 Island", "price": "3,000" },
+          { "name": "Creamy Mushroom Sauce", "price": "4,000" },
+          { "name": "Mayonnaise", "price": "3,000" },
+          { "name": "Creamy Pepper Sauce", "price": "3,000" },
+          { "name": "Side Onion Rings", "price": "7,000" },
+          { "name": "Coleslaw", "price": "7,000" },
+          { "name": "Salsa", "price": "4,000" },
+          { "name": "Side Plantains", "price": "7,000" },
+          { "name": "Steamed Vegs", "price": "4,000" },
+          { "name": "Avocado", "price": "3,000" },
+          { "name": "Sub Masala Chips", "price": "3,000" }
+        ]
+      }
+    ]
+  },
+  {
+    "category": "Curry Corner",
+    "items": [
+      { "name": "Chicken Tikka", "description": "North Indian style boneless chicken cuisine with hot spices done to your request (Hot, Mild, or Medium)", "price": "35,000/=" },
+      { "name": "Peanut Beef Curry", "description": "Beef flakes grilled and tossed in classical peanut butter", "price": "40,000/=" },
+      { "name": "Coconut Fish", "description": "Fish cubes cooked in silky coconut sauce Caribbean style", "price": "35,000/=" },
+      { "name": "Vegetable Curry", "description": "Punjab curry done to your taste", "price": "25,000/=" }
+    ]
+  },
+  {
+    "category": "Specials",
+    "items": [
+      { "name": "Grilled Fish", "description": "", "price": "50,000/=" },
+      { "name": "Steamed Whole Fish", "description": "", "price": "40,000/=" },
+      { "name": "Boiled Goat's Meat", "description": "", "price": "30,000/=" },
+      { "name": "Ox's Liver", "description": "", "price": "30,000/=" }
+    ]
+  },
+  {
+    "category": "Grand Platters (Serves 2-4)",
+    "items": [
+      { "name": "Farmers Mixed Grill", "description": "A combination of extra prime cuts from the Pearl! chunks of fillet steak, goat ribs, chicken breast, and grilled tilapia fillet served with French fries and your choice of dip sauce.", "price": "100,000/=" },
+      { "name": "Ribs & Wings Platter", "description": "A perfect pairing of golden wings and sweet and sour spare ribs done to your perfection", "price": "40,000/=" },
+      { "name": "Mongers Platter", "description": "Huge chunks of fish carefully cut into segments, fish fingers, fishcakes, tilapia fillet, shallow fried, nested on a freshly crafted tomato fricassee served with tartar sauce and sweet potato chips.", "price": "50,000/=" }
+    ]
+  },
+  {
+    "category": "Wraps & Sandwiches",
+    "items": [
+      { "name": "All Seasons Rolex", "description": "Chapati, mayonnaise, bacon, lettuce, tomato, chicken, cheese, and avocado", "price": "25,000/=" },
+      { "name": "Vegan Quesadillas", "description": "Pan seared vegetables wrapped in corn totillas served with guacamole and salsa.", "price": "20,000/=" },
+      { "name": "Chicken/Beef Quesadilla", "description": "This mexican delight with beef or chicken wrapped in corn totillas served with guacamole and salsa is a must try.", "price": "35,000/=" },
+      { "name": "Chicken Tikka Wrap", "description": "Strips of chicken vegetables in tortillas with peppers.", "price": "30,000/=" }
+    ]
+  },
+  {
+    "category": "Pizza Corner",
+    "items": [
+      { "name": "Margherita", "description": "Typical neopolitan pizza made with tomatoes, mozarella and our signature sauce.", "prices": { "medium": "35,000/=", "large": "50,000/=" } },
+      { "name": "Beef Pizza", "description": "Beef minced meat, tomatoes, mozarella, and our signature sauce.", "prices": { "medium": "45,000/=", "large": "65,000/=" } },
+      { "name": "Chicken Pizza", "description": "Poached chicken slices on top of pomodoro sauce with mozarella cheese.", "prices": { "medium": "45,000/=", "large": "65,000/=" } },
+      { "name": "All Seasons Pizza", "description": "Chicken, beef, sausage, vegetable, and mozzarella", "prices": { "medium": "65,000/=", "large": "100,000/=" } },
+      { "name": "Hawaiian Pizza", "description": "Pineapple cubes, garlic salami, mushroom and mozarella", "prices": { "medium": "40,000/=", "large": "65,000/=" } },
+      { "name": "Pepperoni Pizza", "description": "Garlic salami and mozarella cheese.", "prices": { "medium": "50,000/=", "large": "75,000/=" } },
+      { "name": "Vegetarian Pizza", "description": "Sauteed mixed vegetables with mushrooms and mozarella cheese.", "prices": { "medium": "35,000/=", "large": "50,000/=" } }
+    ],
+    "addons": [
+      { "name": "Cheese", "price": "5,000/=" },
+      { "name": "Chicken", "price": "5,000/=" },
+      { "name": "Beef", "price": "5,000/=" },
+      { "name": "Bacon", "price": "5,000/=" },
+      { "name": "Pepperoni", "price": "5,000/=" },
+      { "name": "Salami", "price": "5,000/=" },
+      { "name": "Pineapples", "price": "3,000/=" },
+      { "name": "Olives", "price": "3,000/=" },
+      { "name": "Jalapeños", "price": "3,000/=" },
+      { "name": "Veggies", "price": "2,000/=" },
+      { "name": "Sweet Corn", "price": "3,000/=" },
+      { "name": "Mushrooms", "price": "3,000/=" }
+    ]
+  },
+  {
+    "category": "Pastas",
+    "items": [
+      { "name": "Spaghetti Bolognese", "description": "Spaghetti made with minced beef and Parmesan cheese.", "price": "30,000/=" },
+      { "name": "Mac and Cheese", "description": "A fine blend of our yummy cheese with pasta", "price": "25,000/=" }
+    ],
+    "addons": [
+      { "name": "Parmesan Cheese", "price": "5,000/=" },
+      { "name": "Chicken Strips", "price": "10,000/=" },
+      { "name": "Extra Garlic Bread", "price": "2,000/=" },
+      { "name": "Beef Strips", "price": "5,000/=" },
+      { "name": "Avocado", "price": "3,000/=" }
+    ]
+  },
+  {
+    "category": "Assorted Hot & Cold Beverages",
+    "items": [
+      { "name": "Local Ugandan Tea", "description": "Traditional hot brewed milk or black tea.", "price": "" },
+      { "name": "Fresh Coffee", "description": "Locally sourced, freshly brewed coffee variants.", "price": "" },
+      { "name": "Wines", "description": "Selection of premium vintage and house wines.", "price": "" },
+      { "name": "Cocktails", "description": "Classic and custom mixed alcoholic drinks.", "price": "" },
+      { "name": "Mocktails", "description": "Specialty non-alcoholic mixed fruit beverages.", "price": "" },
+      { "name": "Spirits", "description": "An assortment of high-end liquors and whiskeys.", "price": "" },
+      { "name": "Soft Drinks", "description": "Assorted traditional sodas and fresh fruit juices.", "price": "" },
+      { "name": "Bottled Water", "description": "Chilled or room-temperature drinking water.", "price": "" }
+    ]
+  }
+]

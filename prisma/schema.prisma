@@ -344,7 +344,7 @@ model MenuItem {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
   category  String
-  price     Float
+  price     String?
   status    String   @default("Active")
   description String?
   group     String?
