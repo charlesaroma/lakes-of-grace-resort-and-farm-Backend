@@ -5,6 +5,7 @@ import {
   getNotifications,
   getNotification,
   createNotification,
+  updateNotification,
   markAsRead,
   markAllAsRead,
   deleteNotification,
@@ -18,6 +19,7 @@ router.get('/unread-count', getUnreadCount);
 router.get('/', getNotifications);
 router.get('/:id', getNotification);
 router.post('/', createNotification);
+router.put('/:id', updateNotification);
 router.patch('/:id/read', markAsRead);
 router.patch('/read-all', markAllAsRead);
 router.delete('/:id', deleteNotification);

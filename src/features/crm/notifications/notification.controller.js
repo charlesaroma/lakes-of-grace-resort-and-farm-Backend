@@ -58,6 +58,26 @@ export const createNotification = async (req, res) => {
   res.status(201).json(item);
 };
 
+export const updateNotification = async (req, res) => {
+  const result = updateNotificationSchema.safeParse(req.body);
+  if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+  const item = await prisma.notification.update({ where: { id: req.params.id }, data: result.data });
+  if (!item) return res.status(404).json({ message: 'Notification not found' });
+  await prisma.auditLog.create({
+    data: {
+      action: 'Notification Updated',
+      entityType: 'Notification',
+      entityId: item.id,
+      actorId: req.userId,
+      changes: { title: item.title },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
+  });
+  res.json(item);
+};
+
 export const markAsRead = async (req, res) => {
   const item = await prisma.notification.update({ where: { id: req.params.id }, data: { isRead: true } });
   if (!item) return res.status(404).json({ message: 'Notification not found' });

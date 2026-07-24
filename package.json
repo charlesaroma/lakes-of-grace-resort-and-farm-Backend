@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "build": "prisma generate",
-  "start": "prisma generate && node src/server.js",
+    "start": "prisma generate && node src/server.js",
     "dev": "nodemon src/server.js",
     "seed:manager": "node scripts/seed-manager.js",
     "seed:dev": "node scripts/seed-system-developers.js",

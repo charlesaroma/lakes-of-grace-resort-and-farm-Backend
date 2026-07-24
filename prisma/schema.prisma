@@ -127,19 +127,6 @@ model Booking {
   @@map("bookings")
 }
 
-model Cottage {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  name         String   @unique
-  label        String?
-  capacity     Int
-  pricePerNight Float
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("cottages")
-}
-
 model Room {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   roomNumber   String   @unique
@@ -154,19 +141,6 @@ model Room {
   updatedAt    DateTime @updatedAt
 
   @@map("rooms")
-}
-
-model Lead {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String
-  imageUrl  String?
-  status    String   @default("new")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([email, status])
-  @@map("leads")
 }
 
 model Guest {
@@ -254,35 +228,6 @@ model CheckIn {
 
   @@index([status, bookingId])
   @@map("check_ins")
-}
-
-model Guideline {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  category    String
-  title       String
-  description String?
-  icon        String?
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([category, sortOrder])
-  @@map("guidelines")
-}
-
-model ConferenceHall {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
-  capacity    Int
-  description String?
-  amenities   String[]
-  images      String[]
-  pricePerDay Float
-  status      String   @default("Available")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("conference_halls")
 }
 
 model Notification {
@@ -415,4 +360,16 @@ model AuditLog {
   @@index([actorId, createdAt])
   @@index([severity, createdAt])
   @@map("audit_logs")
+}
+
+model RoomCategory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomType    String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([roomType, name])
+  @@map("room_categories")
 }
