@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const ratingEnum = z.enum(['Very Happy', 'Happy', 'Satisfied', 'Sad']);
+const ratingField = z.number().int().min(1, 'Please rate this category').max(5);
 const occupancyEnum = z.enum([
   'Single',
   'Double Couple',
@@ -10,8 +10,8 @@ const occupancyEnum = z.enum([
 ]);
 
 export const createEvaluationSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
+  firstName: z.string().optional().default(''),
+  lastName: z.string().optional().default(''),
   gender: z.enum(['Female', 'Male']).optional(),
   phone: z.string().optional().default(''),
   email: z.string().email().optional().or(z.literal('')),
@@ -24,19 +24,19 @@ export const createEvaluationSchema = z.object({
   occupancy: occupancyEnum.optional(),
   numberOfChildren: z.number().int().min(0).optional().default(0),
   referralSource: z.string().optional().default(''),
-  staffPerformance: ratingEnum.optional(),
-  accommodations: ratingEnum.optional(),
-  propertyEnvironment: ratingEnum.optional(),
-  diningCatering: ratingEnum.optional(),
-  recreationSafety: ratingEnum.optional(),
-  frontDeskOperations: ratingEnum.optional(),
+  staffPerformance: ratingField.optional(),
+  accommodations: ratingField.optional(),
+  propertyEnvironment: ratingField.optional(),
+  diningCatering: ratingField.optional(),
+  recreationSafety: ratingField.optional(),
+  frontDeskOperations: ratingField.optional(),
   generalComments: z.string().optional().default(''),
   suggestions: z.string().optional().default(''),
 });
 
 export const updateEvaluationSchema = z.object({
-  firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   gender: z.enum(['Female', 'Male']).optional(),
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
@@ -49,12 +49,12 @@ export const updateEvaluationSchema = z.object({
   occupancy: occupancyEnum.optional(),
   numberOfChildren: z.number().int().min(0).optional(),
   referralSource: z.string().optional(),
-  staffPerformance: ratingEnum.optional(),
-  accommodations: ratingEnum.optional(),
-  propertyEnvironment: ratingEnum.optional(),
-  diningCatering: ratingEnum.optional(),
-  recreationSafety: ratingEnum.optional(),
-  frontDeskOperations: ratingEnum.optional(),
+  staffPerformance: ratingField.optional(),
+  accommodations: ratingField.optional(),
+  propertyEnvironment: ratingField.optional(),
+  diningCatering: ratingField.optional(),
+  recreationSafety: ratingField.optional(),
+  frontDeskOperations: ratingField.optional(),
   generalComments: z.string().optional(),
   suggestions: z.string().optional(),
 });

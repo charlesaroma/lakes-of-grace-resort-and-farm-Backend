@@ -192,12 +192,12 @@ model Evaluation {
   occupancy            String?
   numberOfChildren     Int?
   referralSource       String?
-  staffPerformance     String?
-  accommodations       String?
-  propertyEnvironment  String?
-  diningCatering       String?
-  recreationSafety     String?
-  frontDeskOperations  String?
+  staffPerformance     Int?
+  accommodations       Int?
+  propertyEnvironment  Int?
+  diningCatering       Int?
+  recreationSafety     Int?
+  frontDeskOperations  Int?
   generalComments      String?
   suggestions          String?
   createdAt            DateTime @default(now())
@@ -372,4 +372,14 @@ model RoomCategory {
 
   @@index([roomType, name])
   @@map("room_categories")
+}
+
+model ImageCategory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("image_categories")
 }
