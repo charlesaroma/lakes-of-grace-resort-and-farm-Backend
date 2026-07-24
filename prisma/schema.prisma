@@ -192,12 +192,12 @@ model Evaluation {
   occupancy            String?
   numberOfChildren     Int?
   referralSource       String?
-  staffPerformance     Int?
-  accommodations       Int?
-  propertyEnvironment  Int?
-  diningCatering       Int?
-  recreationSafety     Int?
-  frontDeskOperations  Int?
+  staffPerformance     String?
+  accommodations       String?
+  propertyEnvironment  String?
+  diningCatering       String?
+  recreationSafety     String?
+  frontDeskOperations  String?
   generalComments      String?
   suggestions          String?
   createdAt            DateTime @default(now())

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const ratingField = z.number().int().min(1, 'Please rate this category').max(5);
+const ratingField = z.string().regex(/^[1-5]$/, 'Please rate this category');
 const occupancyEnum = z.enum([
   'Single',
   'Double Couple',
