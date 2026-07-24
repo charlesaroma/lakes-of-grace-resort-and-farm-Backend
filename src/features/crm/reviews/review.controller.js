@@ -54,13 +54,17 @@ export const submitReview = async (req, res) => {
   res.status(201).json(review);
 };
 
+const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
+
 export const getReview = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid review ID' });
   const review = await prisma.review.findUnique({ where: { id: req.params.id } });
   if (!review) return res.status(404).json({ message: 'Review not found' });
   res.json(review);
 };
 
 export const updateReview = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid review ID' });
   const result = updateReviewSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
 
@@ -102,6 +106,7 @@ export const updateReview = async (req, res) => {
 };
 
 export const approveReview = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid review ID' });
   const review = await prisma.review.update({ where: { id: req.params.id }, data: { status: 'Published' } });
   if (!review) return res.status(404).json({ message: 'Review not found' });
   await prisma.auditLog.create({
@@ -120,6 +125,7 @@ export const approveReview = async (req, res) => {
 };
 
 export const rejectReview = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid review ID' });
   const review = await prisma.review.update({ where: { id: req.params.id }, data: { status: 'Rejected' } });
   if (!review) return res.status(404).json({ message: 'Review not found' });
   await prisma.auditLog.create({
@@ -138,6 +144,7 @@ export const rejectReview = async (req, res) => {
 };
 
 export const deleteReview = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid review ID' });
   const review = await prisma.review.findUnique({ where: { id: req.params.id } });
   if (!review) return res.status(404).json({ message: 'Review not found' });
   await prisma.review.delete({ where: { id: req.params.id } });

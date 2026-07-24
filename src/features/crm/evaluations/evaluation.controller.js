@@ -5,6 +5,7 @@ export const submitEvaluation = async (req, res) => {
   const result = createEvaluationSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   const evaluation = await prisma.evaluation.create({ data: result.data });
+  req.app.get('io').emit('evaluation:created', evaluation);
   res.status(201).json(evaluation);
 };
 
@@ -20,13 +21,17 @@ export const getEvaluations = async (req, res) => {
   res.json({ items, total, totalPages: Math.ceil(total / limitNum), page: pageNum });
 };
 
+const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
+
 export const getEvaluation = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid evaluation ID' });
   const evaluation = await prisma.evaluation.findUnique({ where: { id: req.params.id } });
   if (!evaluation) return res.status(404).json({ message: 'Evaluation not found' });
   res.json(evaluation);
 };
 
 export const deleteEvaluation = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid evaluation ID' });
   const evaluation = await prisma.evaluation.findUnique({ where: { id: req.params.id } });
   if (!evaluation) return res.status(404).json({ message: 'Evaluation not found' });
   await prisma.evaluation.delete({ where: { id: req.params.id } });
