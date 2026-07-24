@@ -4,10 +4,12 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "build": "prisma generate",
+  "start": "prisma generate && node src/server.js",
     "dev": "nodemon src/server.js",
     "seed:manager": "node scripts/seed-manager.js",
     "seed:dev": "node scripts/seed-system-developers.js",
+    "seed:menu": "node scripts/seedMenuPrisma.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
