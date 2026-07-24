@@ -83,8 +83,10 @@ async function seed() {
     }
 
     const flatItems = flattenCategories(raw);
-    for (const item of flatItems) {
-      await prisma.menuItem.create({ data: item });
+    const chunkSize = 25;
+    for (let i = 0; i < flatItems.length; i += chunkSize) {
+      const chunk = flatItems.slice(i, i + chunkSize);
+      await prisma.menuItem.createMany({ data: chunk });
     }
 
     console.log(`Inserted ${flatItems.length} menu items.`);
