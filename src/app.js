@@ -72,6 +72,7 @@ app.use(cors({
     }
   },
   credentials: true,
+  maxAge: 86400, // 24 hours
 }));
 app.use(cookieParser());
 
