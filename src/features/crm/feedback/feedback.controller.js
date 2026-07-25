@@ -10,7 +10,7 @@ export const submitFeedback = async (req, res) => {
 
     const [review, evaluation] = await Promise.all([
       prisma.review.create({
-        data: { firstName, lastName, email, rating, title, comment },
+        data: { firstName, lastName, rating, title, comment },
       }),
       prisma.evaluation.create({
         data: {
