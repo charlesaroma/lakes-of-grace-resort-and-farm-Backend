@@ -19,6 +19,7 @@ export const getStockItem = async (req, res) => {
 
 export const createStockItem = async (req, res) => {
   const item = await prisma.stockItem.create({ data: req.body });
+  req.app.get('io')?.emit?.('stockItems:created', item);
   await prisma.auditLog.create({
     data: {
       action: 'Stock Item Created',
@@ -37,6 +38,7 @@ export const createStockItem = async (req, res) => {
 export const updateStockItem = async (req, res) => {
   const item = await prisma.stockItem.update({ where: { id: req.params.id }, data: req.body });
   if (!item) return res.status(404).json({ message: 'Stock item not found' });
+  req.app.get('io')?.emit?.('stockItems:updated', item);
   await prisma.auditLog.create({
     data: {
       action: 'Stock Item Updated',
@@ -56,6 +58,7 @@ export const deleteStockItem = async (req, res) => {
   const item = await prisma.stockItem.findUnique({ where: { id: req.params.id } });
   if (!item) return res.status(404).json({ message: 'Stock item not found' });
   await prisma.stockItem.delete({ where: { id: req.params.id } });
+  req.app.get('io')?.emit?.('stockItems:deleted', { id: req.params.id });
   await prisma.auditLog.create({
     data: {
       action: 'Stock Item Deleted',
@@ -104,6 +107,7 @@ export const restockItem = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('stockItems:updated', updatedItem);
   await prisma.auditLog.create({
     data: {
       action: 'Stock Restock',
@@ -150,6 +154,7 @@ export const dispatchItem = async (req, res) => {
   });
 
   const severity = newQuantity < item.threshold ? 'Warning' : 'Info';
+  req.app.get('io')?.emit?.('stockItems:updated', updatedItem);
   await prisma.auditLog.create({
     data: {
       action: 'Stock Dispatch',
@@ -189,6 +194,7 @@ export const adjustStock = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('stockItems:updated', updatedItem);
   await prisma.auditLog.create({
     data: {
       action: 'Stock Adjustment',

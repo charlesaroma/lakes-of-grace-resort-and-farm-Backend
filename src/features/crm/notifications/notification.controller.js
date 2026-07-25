@@ -43,6 +43,7 @@ export const createNotification = async (req, res) => {
   const result = createNotificationSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   const item = await prisma.notification.create({ data: result.data });
+  req.app.get('io')?.emit?.('notification:created', item);
   await prisma.auditLog.create({
     data: {
       action: 'Notification Created',
@@ -63,6 +64,7 @@ export const updateNotification = async (req, res) => {
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   const item = await prisma.notification.update({ where: { id: req.params.id }, data: result.data });
   if (!item) return res.status(404).json({ message: 'Notification not found' });
+  req.app.get('io')?.emit?.('notification:updated', item);
   await prisma.auditLog.create({
     data: {
       action: 'Notification Updated',
@@ -81,6 +83,7 @@ export const updateNotification = async (req, res) => {
 export const markAsRead = async (req, res) => {
   const item = await prisma.notification.update({ where: { id: req.params.id }, data: { isRead: true } });
   if (!item) return res.status(404).json({ message: 'Notification not found' });
+  req.app.get('io')?.emit?.('notification:updated', item);
   res.json(item);
 };
 
@@ -89,6 +92,7 @@ export const markAllAsRead = async (req, res) => {
     where: { isRead: false, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
     data: { isRead: true },
   });
+  req.app.get('io')?.emit?.('notification:updated', {});
   await prisma.auditLog.create({
     data: {
       action: 'All Notifications Marked Read',
@@ -108,6 +112,7 @@ export const deleteNotification = async (req, res) => {
   const item = await prisma.notification.findUnique({ where: { id: req.params.id } });
   if (!item) return res.status(404).json({ message: 'Notification not found' });
   await prisma.notification.delete({ where: { id: req.params.id } });
+  req.app.get('io')?.emit?.('notification:deleted', { id: req.params.id });
   await prisma.auditLog.create({
     data: {
       action: 'Notification Deleted',

@@ -45,9 +45,10 @@ export const createCheckIn = async (req, res) => {
 
   await prisma.room.update({ where: { roomNumber: result.data.roomNumber }, data: { status: 'Booked' } });
 
+  req.app.get('io')?.emit?.('checkin:created', checkIn);
   await prisma.auditLog.create({
-    data: {
-      action: 'Guest Checked In',
+      data: {
+        action: 'Guest Checked In',
       entityType: 'CheckIn',
       entityId: checkIn.id,
       actorId: req.userId,
@@ -76,6 +77,7 @@ export const updateCheckIn = async (req, res) => {
 
   if (updateData.status === 'Checked-Out') {
     await prisma.room.update({ where: { roomNumber: checkIn.roomNumber }, data: { status: 'Cleaning' } });
+    req.app.get('io')?.emit?.('checkin:updated', checkIn);
     await prisma.auditLog.create({
       data: {
         action: 'Guest Checked Out',
@@ -89,6 +91,7 @@ export const updateCheckIn = async (req, res) => {
       },
     });
   }
+  req.app.get('io')?.emit?.('checkin:updated', checkIn);
   res.json(checkIn);
 };
 
@@ -96,9 +99,10 @@ export const deleteCheckIn = async (req, res) => {
   const checkIn = await prisma.checkIn.findUnique({ where: { id: req.params.id } });
   if (!checkIn) return res.status(404).json({ message: 'Check-in not found' });
   await prisma.checkIn.delete({ where: { id: req.params.id } });
+  req.app.get('io')?.emit?.('checkin:deleted', { id: req.params.id });
   await prisma.auditLog.create({
-    data: {
-      action: 'CheckIn Record Deleted',
+      data: {
+        action: 'CheckIn Record Deleted',
       entityType: 'CheckIn',
       entityId: req.params.id,
       actorId: req.userId,

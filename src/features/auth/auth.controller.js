@@ -32,7 +32,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ errors: result.error.flatten().fieldErrors });
     }
 
-    const { email, password } = result.data;
+    const { email, password, rememberMe } = result.data;
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
@@ -44,7 +44,7 @@ export const login = async (req, res) => {
       data: { lastLogin: new Date() },
     });
 
-    const accessToken = signAccessToken(user.id, user.role);
+    const accessToken = signAccessToken(user.id, user.role, rememberMe);
     res.json({
       accessToken,
       user: { id: user.id, name: user.name, email: user.email, role: user.role },

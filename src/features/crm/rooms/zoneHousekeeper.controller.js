@@ -38,6 +38,7 @@ export const createZoneHousekeeper = async (req, res) => {
       manager: { select: { id: true, name: true, email: true } }
     }
   });
+  req.app.get('io')?.emit?.('zoneHousekeeper:created', item);
   res.status(201).json(item);
 };
 
@@ -61,6 +62,7 @@ export const updateZoneHousekeeper = async (req, res) => {
     }
   });
   if (!item) return res.status(404).json({ message: 'Zone assignment not found' });
+  req.app.get('io')?.emit?.('zoneHousekeeper:updated', item);
   res.json(item);
 };
 
@@ -68,5 +70,6 @@ export const deleteZoneHousekeeper = async (req, res) => {
   const item = await prisma.zoneHousekeeper.findUnique({ where: { id: req.params.id } });
   if (!item) return res.status(404).json({ message: 'Zone assignment not found' });
   await prisma.zoneHousekeeper.delete({ where: { id: req.params.id } });
+  req.app.get('io')?.emit?.('zoneHousekeeper:deleted', { id: req.params.id });
   res.json({ message: 'Zone assignment deleted' });
 };
