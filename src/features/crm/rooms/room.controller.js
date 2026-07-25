@@ -48,6 +48,7 @@ export const createRoom = async (req, res) => {
       severity: 'Info',
     },
   });
+  req.app.get('io')?.emit?.('room:created', room);
   res.status(201).json(room);
 };
 
@@ -76,6 +77,7 @@ export const updateRoom = async (req, res) => {
       severity: 'Info',
     },
   });
+  req.app.get('io')?.emit?.('room:updated', room);
   res.json(room);
 };
 
@@ -95,5 +97,6 @@ export const deleteRoom = async (req, res) => {
       severity: 'Warning',
     },
   });
+  req.app.get('io')?.emit?.('room:deleted', { id: req.params.id });
   res.json({ message: 'Room deleted' });
 };

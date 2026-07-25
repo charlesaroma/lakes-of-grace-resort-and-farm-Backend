@@ -42,6 +42,7 @@ export const createMenuItem = async (req, res) => {
       severity: 'Info',
     },
   });
+  req.app.get('io')?.emit?.('menuItems:created', item);
   res.status(201).json(item);
 };
 
@@ -60,6 +61,7 @@ export const updateMenuItem = async (req, res) => {
       severity: 'Info',
     },
   });
+  req.app.get('io')?.emit?.('menuItems:updated', item);
   res.json(item);
 };
 
@@ -87,5 +89,6 @@ export const deleteMenuItem = async (req, res) => {
       severity: 'Warning',
     },
   });
+  req.app.get('io')?.emit?.('menuItems:deleted', { id: req.params.id });
   res.json({ message: 'Menu item deleted' });
 };

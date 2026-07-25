@@ -2,21 +2,22 @@ import prisma from '../../lib/prisma.js';
 import { createDepartmentSchema, updateDepartmentSchema } from '../../../shared/schemas/department.schema.js';
 
 export const listDepartments = async (req, res) => {
-  const departments = await prisma.department.findMany({
-    orderBy: { createdAt: 'asc' },
-    include: { _count: { select: { staff: true } } },
-  });
+  const [departments, staffCounts] = await Promise.all([
+    prisma.department.findMany({ orderBy: { createdAt: 'asc' } }),
+    prisma.staff.groupBy({ by: ['department'], _count: true }),
+  ]);
+  const countMap = Object.fromEntries(staffCounts.map(s => [s.department, s._count]));
+  departments.forEach(d => { d._count = { staff: countMap[d.name] || 0 }; });
   res.json(departments);
 };
 
 export const getDepartment = async (req, res) => {
   const { id } = req.params;
   if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid department ID' });
-  const department = await prisma.department.findUnique({
-    where: { id },
-    include: { _count: { select: { staff: true } } },
-  });
+  const department = await prisma.department.findUnique({ where: { id } });
   if (!department) return res.status(404).json({ message: 'Department not found' });
+  const staffCount = await prisma.staff.count({ where: { department: department.name } });
+  department._count = { staff: staffCount };
   res.json(department);
 };
 
@@ -44,6 +45,7 @@ export const createDepartment = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('department:created', department);
   res.status(201).json(department);
 };
 
@@ -89,6 +91,7 @@ export const updateDepartment = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('department:updated', updated);
   res.json(updated);
 };
 
@@ -96,13 +99,11 @@ export const deleteDepartment = async (req, res) => {
   const { id } = req.params;
   if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid department ID' });
 
-  const department = await prisma.department.findUnique({
-    where: { id },
-    include: { _count: { select: { staff: true } } },
-  });
+  const department = await prisma.department.findUnique({ where: { id } });
   if (!department) return res.status(404).json({ message: 'Department not found' });
 
-  if (department._count.staff > 0) {
+  const staffCount = await prisma.staff.count({ where: { department: department.name } });
+  if (staffCount > 0) {
     return res.status(400).json({
       message: `Cannot delete "${department.name}" — it is assigned to ${department._count.staff} staff member(s). Remove or reassign them first.`,
     });
@@ -123,5 +124,6 @@ export const deleteDepartment = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('department:deleted', { id });
   res.json({ message: 'Department deleted' });
 };

@@ -49,6 +49,7 @@ export const createUser = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('user:created', { id: user.id, name: user.name, email: user.email, role: user.role });
   res.status(201).json({
     id: user.id,
     name: user.name,
@@ -97,6 +98,7 @@ export const updateUser = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('user:updated', { id: user.id, name: updateData.name || user.name, email: updateData.email || user.email, role: updateData.role || user.role });
   res.json({ id: user.id, name: updateData.name || user.name, email: updateData.email || user.email, role: updateData.role || user.role });
 };
 
@@ -125,6 +127,7 @@ export const deleteUser = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('user:deleted', { id: req.params.id });
   res.json({ message: 'User deleted' });
 };
 
@@ -203,6 +206,7 @@ export const promoteStaff = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('user:updated', { id: user.id, role: newRole });
   res.json({ id: user.id, name: user.name, email: user.email, role: newRole });
 };
 
@@ -236,6 +240,7 @@ export const suspendUser = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('user:updated', { id: user.id, isActive: false });
   res.json({ message: 'User suspended' });
 };
 
@@ -265,6 +270,7 @@ export const reactivateUser = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('user:updated', { id: user.id, isActive: true });
   res.json({ message: 'User reactivated' });
 };
 

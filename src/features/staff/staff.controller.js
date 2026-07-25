@@ -64,6 +64,7 @@ export const createStaff = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('staff:created', staff);
   res.status(201).json(staff);
 };
 
@@ -108,6 +109,7 @@ export const updateStaff = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('staff:updated', { id, ...updateData });
   res.json({ id, ...updateData });
 };
 
@@ -137,6 +139,7 @@ export const deleteStaff = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('staff:deleted', { id });
   res.json({ message: 'Staff deleted' });
 };
 
@@ -176,6 +179,7 @@ export const linkUser = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('staff:updated', { id, userId });
   res.json({ message: 'Staff linked to user' });
 };
 
@@ -203,5 +207,6 @@ export const unlinkUser = async (req, res) => {
     },
   });
 
+  req.app.get('io')?.emit?.('staff:updated', { id, userId: null });
   res.json({ message: 'Staff unlinked from user' });
 };

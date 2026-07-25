@@ -15,12 +15,14 @@ export const getInquiry = async (req, res) => {
 
 export const createInquiry = async (req, res) => {
   const inquiry = await prisma.inquiry.create({ data: req.body });
+  req.app.get('io')?.emit?.('inquiry:created', inquiry);
   res.status(201).json(inquiry);
 };
 
 export const updateInquiry = async (req, res) => {
   const inquiry = await prisma.inquiry.update({ where: { id: req.params.id }, data: req.body });
   if (!inquiry) return res.status(404).json({ message: 'Inquiry not found' });
+  req.app.get('io')?.emit?.('inquiry:updated', inquiry);
   res.json(inquiry);
 };
 
@@ -28,5 +30,6 @@ export const deleteInquiry = async (req, res) => {
   const inquiry = await prisma.inquiry.findUnique({ where: { id: req.params.id } });
   if (!inquiry) return res.status(404).json({ message: 'Inquiry not found' });
   await prisma.inquiry.delete({ where: { id: req.params.id } });
+  req.app.get('io')?.emit?.('inquiry:deleted', { id: req.params.id });
   res.json({ message: 'Inquiry deleted' });
 };

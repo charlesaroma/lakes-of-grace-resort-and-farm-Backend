@@ -94,6 +94,19 @@ export const createBooking = async (req, res) => {
     return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   }
   const booking = await prisma.booking.create({ data: result.data });
+  await prisma.auditLog.create({
+    data: {
+      action: 'Booking Created',
+      entityType: 'Booking',
+      entityId: booking.id,
+      actorId: req.userId,
+      changes: { guestName: booking.guestName },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
+  });
+  req.app.get('io')?.emit?.('booking:created', formatBooking(booking));
   res.status(201).json(formatBooking(booking));
 };
 
@@ -105,5 +118,18 @@ export const updateBooking = async (req, res) => {
   }
   const booking = await prisma.booking.update({ where: { id: req.params.id }, data: result.data });
   if (!booking) return res.status(404).json({ message: 'Booking not found' });
+  await prisma.auditLog.create({
+    data: {
+      action: 'Booking Updated',
+      entityType: 'Booking',
+      entityId: booking.id,
+      actorId: req.userId,
+      changes: result.data,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
+  });
+  req.app.get('io')?.emit?.('booking:updated', formatBooking(booking));
   res.json(formatBooking(booking));
 };
