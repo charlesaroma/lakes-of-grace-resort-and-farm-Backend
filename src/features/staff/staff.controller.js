@@ -1,6 +1,15 @@
 import prisma from '../../lib/prisma.js';
 import { createStaffSchema, updateStaffSchema } from '../../../shared/schemas/staff.schema.js';
 
+async function validateDepartment(res, department) {
+  const dept = await prisma.department.findUnique({ where: { name: department } });
+  if (!dept) {
+    res.status(400).json({ message: `Department "${department}" does not exist.` });
+    return false;
+  }
+  return true;
+}
+
 const staffSelect = {
   id: true, firstName: true, lastName: true, email: true,
   phone: true, photo: true, department: true, position: true,
@@ -34,6 +43,7 @@ export const createStaff = async (req, res) => {
   }
 
   const { firstName, lastName, email, phone, photo, department, position } = result.data;
+  if (!(await validateDepartment(res, department))) return;
   const existing = await prisma.staff.findUnique({ where: { email } });
   if (existing) return res.status(409).json({ message: 'Staff with this email already exists' });
 
@@ -67,6 +77,8 @@ export const updateStaff = async (req, res) => {
 
   const staff = await prisma.staff.findUnique({ where: { id } });
   if (!staff) return res.status(404).json({ message: 'Staff not found' });
+
+  if (result.data.department && !(await validateDepartment(res, result.data.department))) return;
 
   const changes = {};
   const updateData = {};

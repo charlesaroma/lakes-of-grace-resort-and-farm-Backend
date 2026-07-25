@@ -20,15 +20,6 @@ enum UserRole {
   housekeeper_mobile
 }
 
-enum Department {
-  FrontDesk
-  Housekeeping
-  Kitchen
-  Management
-  Maintenance
-  Activities
-}
-
 enum AreaOfStay {
   Standard
   Deluxe
@@ -145,6 +136,17 @@ model User {
   @@map("users")
 }
 
+model Department {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  color       String   @default("bg-gray-100 text-gray-700")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("departments")
+}
+
 model Staff {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   firstName    String
@@ -152,7 +154,7 @@ model Staff {
   email        String   @unique
   phone        String?
   photo        String?
-  department   String   @default("FrontDesk")
+  department   String
   position     String?
   employedDate DateTime @default(now())
   isActive     Boolean  @default(true)

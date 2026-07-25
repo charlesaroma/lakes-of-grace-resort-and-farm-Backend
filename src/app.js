@@ -46,6 +46,7 @@ import authRoutes from './features/auth/auth.routes.js';
 import userRoutes from './features/users/user.routes.js';
 import staffRoutes from './features/staff/staff.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
+import departmentRoutes from './features/departments/department.routes.js';
 // import paymentRoutes from './features/payments/payment.routes.js';
 
 // ─── App Initialization ───
@@ -113,6 +114,7 @@ app.use('/api/crm/guests', guestRoutes);
 app.use('/api/crm/inquiries', inquiryRoutes);
 app.use('/api/crm/media', mediaRoutes);
 app.use('/api/crm/audit-logs', auditLogRoutes);
+app.use('/api/crm/departments', departmentRoutes);
 app.use('/api/crm/dashboard', dashboardRoutes);
 
 app.use('/api/media', publicRoutes);
