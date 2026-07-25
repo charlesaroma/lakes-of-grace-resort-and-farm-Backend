@@ -25,6 +25,7 @@ export const submitFeedback = async (req, res) => {
 
     try {
       req.app.get('io')?.emit?.('evaluation:created', evaluation);
+      req.app.get('io')?.emit?.('review:created', review);
     } catch { }
 
     res.status(201).json({ review, evaluation });

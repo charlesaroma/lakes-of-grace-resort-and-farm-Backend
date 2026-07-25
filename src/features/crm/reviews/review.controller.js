@@ -51,6 +51,7 @@ export const submitReview = async (req, res) => {
   const result = createReviewSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   const review = await prisma.review.create({ data: result.data });
+  req.app.get('io')?.emit?.('review:created', review);
   res.status(201).json(review);
 };
 
@@ -102,6 +103,7 @@ export const updateReview = async (req, res) => {
       },
     });
   }
+  req.app.get('io')?.emit?.('review:updated', review);
   res.json(review);
 };
 
@@ -121,6 +123,7 @@ export const approveReview = async (req, res) => {
       severity: 'Info',
     },
   });
+  req.app.get('io')?.emit?.('review:updated', review);
   res.json(review);
 };
 
@@ -160,5 +163,6 @@ export const deleteReview = async (req, res) => {
       severity: 'Warning',
     },
   });
+  req.app.get('io')?.emit?.('review:deleted', { id: req.params.id });
   res.json({ message: 'Review deleted' });
 };

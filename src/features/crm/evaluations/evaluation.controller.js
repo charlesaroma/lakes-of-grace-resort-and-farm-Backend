@@ -5,7 +5,7 @@ export const submitEvaluation = async (req, res) => {
   const result = createEvaluationSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   const evaluation = await prisma.evaluation.create({ data: result.data });
-  req.app.get('io').emit('evaluation:created', evaluation);
+  req.app.get('io')?.emit?.('evaluation:created', evaluation);
   res.status(201).json(evaluation);
 };
 
@@ -47,5 +47,6 @@ export const deleteEvaluation = async (req, res) => {
       severity: 'Warning',
     },
   });
+  req.app.get('io')?.emit?.('evaluation:deleted', { id: req.params.id });
   res.json({ message: 'Evaluation deleted' });
 };
