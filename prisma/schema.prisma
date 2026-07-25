@@ -165,8 +165,8 @@ model Guest {
 
 model Review {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  firstName     String
-  lastName      String
+  firstName     String   @default("")
+  lastName      String   @default("")
   email         String?
   rating        Int
   title         String?
@@ -184,8 +184,8 @@ model Review {
 
 model Evaluation {
   id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-  firstName            String
-  lastName             String
+  firstName            String   @default("")
+  lastName             String   @default("")
   gender               String?
   phone                String?
   email                String?
