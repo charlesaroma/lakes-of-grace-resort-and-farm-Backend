@@ -16,6 +16,7 @@ export const createImageCategory = async (req, res) => {
   const result = createImageCategorySchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   const item = await prisma.imageCategory.create({ data: result.data });
+  req.app.get('io').emit('imageCategories:created', item);
   res.status(201).json(item);
 };
 
@@ -24,6 +25,7 @@ export const updateImageCategory = async (req, res) => {
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   const item = await prisma.imageCategory.update({ where: { id: req.params.id }, data: result.data });
   if (!item) return res.status(404).json({ message: 'Image category not found' });
+  req.app.get('io').emit('imageCategories:updated', item);
   res.json(item);
 };
 
@@ -31,5 +33,6 @@ export const deleteImageCategory = async (req, res) => {
   const item = await prisma.imageCategory.findUnique({ where: { id: req.params.id } });
   if (!item) return res.status(404).json({ message: 'Image category not found' });
   await prisma.imageCategory.delete({ where: { id: req.params.id } });
+  req.app.get('io').emit('imageCategories:deleted', { id: req.params.id });
   res.json({ message: 'Image category deleted' });
 };
