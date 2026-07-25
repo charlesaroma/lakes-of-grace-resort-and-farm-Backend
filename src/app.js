@@ -44,6 +44,7 @@ import auditLogRoutes from './core/audit/auditLog.routes.js';
 import authRoutes from './features/auth/auth.routes.js';
 import userRoutes from './features/users/user.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
+// import paymentRoutes from './features/payments/payment.routes.js';
 
 // ─── App Initialization ───
 const app = express();
@@ -110,6 +111,8 @@ app.use('/api/crm/audit-logs', auditLogRoutes);
 app.use('/api/crm/dashboard', dashboardRoutes);
 
 app.use('/api/media', publicRoutes);
+
+// app.use('/api/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.type('html').send(statusHtml);

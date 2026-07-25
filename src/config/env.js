@@ -17,6 +17,16 @@ const envSchema = z.object({
   IMAGEKIT_PRIVATE_KEY: z.string().min(1, 'IMAGEKIT_PRIVATE_KEY is required'),
   IMAGEKIT_URL_ENDPOINT: z.string().url('IMAGEKIT_URL_ENDPOINT must be a valid URL'),
   IMAGEKIT_WEBHOOK_SECRET: z.string().min(1, 'IMAGEKIT_WEBHOOK_SECRET is required'),
+
+  // ─── Optional: Payment & Email (Pesapal + SMTP) ───
+  // PESAPAL_CONSUMER_KEY: z.string().optional(),
+  // PESAPAL_CONSUMER_SECRET: z.string().optional(),
+  // PESAPAL_ENV: z.enum(['live', 'sandbox']).default('sandbox'),
+  // SMTP_HOST: z.string().optional(),
+  // SMTP_PORT: z.coerce.number().optional(),
+  // SMTP_USER: z.string().optional(),
+  // SMTP_PASS: z.string().optional(),
+  // EMAIL_FROM: z.string().optional(),
 });
 
 // ─── Validate & Export ───
