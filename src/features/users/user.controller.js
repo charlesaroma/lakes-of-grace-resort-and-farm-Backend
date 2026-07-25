@@ -16,7 +16,9 @@ export const listUsers = async (req, res) => {
 };
 
 export const getUser = async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.params.id }, select: userSelect });
+  const { id } = req.params
+  if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid user ID' })
+  const user = await prisma.user.findUnique({ where: { id }, select: userSelect });
   if (!user) return res.status(404).json({ message: 'User not found' });
   res.json(user);
 };
@@ -57,12 +59,14 @@ export const createUser = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
+  const { id } = req.params
+  if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid user ID' })
   const result = updateUserSchema.safeParse(req.body);
   if (!result.success) {
     return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  const user = await prisma.user.findUnique({ where: { id } });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   const changes = {};
@@ -97,7 +101,9 @@ export const updateUser = async (req, res) => {
 };
 
 export const deleteUser = async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  const { id } = req.params
+  if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid user ID' })
+  const user = await prisma.user.findUnique({ where: { id } });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   if (user.role === 'system_developer') {
@@ -170,7 +176,9 @@ export const updateProfile = async (req, res) => {
 };
 
 export const resetPassword = async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  const { id } = req.params
+  if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid user ID' })
+  const user = await prisma.user.findUnique({ where: { id } });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   const { newPassword } = req.body;
