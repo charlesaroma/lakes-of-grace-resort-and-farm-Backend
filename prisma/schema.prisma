@@ -134,7 +134,7 @@ model Booking {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   guestName         String
   guestEmail        String
-  areaOfStay        String
+  areaOfStay        String?
   occupancy         String?
   occupancyDetails  String?
   boardType         String?
