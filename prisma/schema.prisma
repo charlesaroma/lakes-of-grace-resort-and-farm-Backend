@@ -162,6 +162,7 @@ model Review {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   firstName     String
   lastName      String
+  email         String?
   rating        Int
   title         String?
   comment       String?
