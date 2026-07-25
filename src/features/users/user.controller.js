@@ -175,6 +175,99 @@ export const updateProfile = async (req, res) => {
   res.json({ id: user.id, name: updateData.name || user.name, email: updateData.email || user.email, role: user.role });
 };
 
+export const promoteStaff = async (req, res) => {
+  const { id } = req.params;
+  if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid user ID' });
+
+  const { role: newRole } = req.body;
+  const validRoles = ['front_desk', 'kitchen_view', 'housekeeper_mobile', 'admin', 'manager'];
+  if (!validRoles.includes(newRole)) {
+    return res.status(400).json({ message: `Invalid role. Must be one of: ${validRoles.join(', ')}` });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  await prisma.user.update({ where: { id }, data: { role: newRole } });
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'Staff Promoted',
+      entityType: 'User',
+      entityId: user.id,
+      actorId: req.userId,
+      changes: { role: { from: user.role, to: newRole } },
+      severity: 'Security',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    },
+  });
+
+  res.json({ id: user.id, name: user.name, email: user.email, role: newRole });
+};
+
+export const suspendUser = async (req, res) => {
+  const { id } = req.params;
+  if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid user ID' });
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  if (user.role === 'system_developer') {
+    return res.status(403).json({ message: 'Cannot suspend system developer accounts' });
+  }
+
+  if (!user.isActive) {
+    return res.status(400).json({ message: 'User is already suspended' });
+  }
+
+  await prisma.user.update({ where: { id }, data: { isActive: false } });
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'User Suspended',
+      entityType: 'User',
+      entityId: user.id,
+      actorId: req.userId,
+      changes: { isActive: { from: true, to: false } },
+      severity: 'Security',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    },
+  });
+
+  res.json({ message: 'User suspended' });
+};
+
+export const reactivateUser = async (req, res) => {
+  const { id } = req.params;
+  if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid user ID' });
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  if (user.isActive) {
+    return res.status(400).json({ message: 'User is already active' });
+  }
+
+  await prisma.user.update({ where: { id }, data: { isActive: true } });
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'User Reactivated',
+      entityType: 'User',
+      entityId: user.id,
+      actorId: req.userId,
+      changes: { isActive: { from: false, to: true } },
+      severity: 'Security',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    },
+  });
+
+  res.json({ message: 'User reactivated' });
+};
+
 export const resetPassword = async (req, res) => {
   const { id } = req.params
   if (!id || id === 'undefined') return res.status(400).json({ message: 'Invalid user ID' })

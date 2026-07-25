@@ -44,6 +44,7 @@ import publicRoutes from './features/public/public.routes.js';
 import auditLogRoutes from './core/audit/auditLog.routes.js';
 import authRoutes from './features/auth/auth.routes.js';
 import userRoutes from './features/users/user.routes.js';
+import staffRoutes from './features/staff/staff.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 // import paymentRoutes from './features/payments/payment.routes.js';
 
@@ -95,6 +96,7 @@ app.use(express.json());
 // ─── Routes ───
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/crm/staff', staffRoutes);
 app.use('/api/crm/bookings', bookingRoutes);
 app.use('/api/crm/rooms', roomRoutes);
 app.use('/api/crm/reviews', reviewRoutes);

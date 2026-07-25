@@ -15,6 +15,18 @@ enum UserRole {
   admin
   manager
   system_developer
+  front_desk
+  kitchen_view
+  housekeeper_mobile
+}
+
+enum Department {
+  FrontDesk
+  Housekeeping
+  Kitchen
+  Management
+  Maintenance
+  Activities
 }
 
 enum AreaOfStay {
@@ -108,6 +120,7 @@ enum EntityType {
   Guideline
   ConferenceHall
   Notification
+  Staff
 }
 
 // ─── Models ───
@@ -118,6 +131,7 @@ model User {
   email        String    @unique
   passwordHash String
   role         String    @default("staff")
+  isActive     Boolean   @default(true)
   lastLogin    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -126,8 +140,29 @@ model User {
   auditLogs         AuditLog[]
   housekeeperZones  ZoneHousekeeper[] @relation("HousekeeperRelation")
   managedZones      ZoneHousekeeper[] @relation("ManagerRelation")
+  staffProfile      Staff?
 
   @@map("users")
+}
+
+model Staff {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName    String
+  lastName     String
+  email        String   @unique
+  phone        String?
+  photo        String?
+  department   String   @default("FrontDesk")
+  position     String?
+  employedDate DateTime @default(now())
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId String? @unique @db.ObjectId
+  userAccount User? @relation(fields: [userId], references: [id])
+
+  @@map("staff")
 }
 
 model Booking {
