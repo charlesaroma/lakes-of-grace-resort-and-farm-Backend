@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import prisma from '../../lib/prisma.js';
 import { createUserSchema, updateUserSchema } from '../../../shared/schemas/user.schema.js';
 
-const userSelect = { id: true, name: true, email: true, role: true, lastLogin: true, createdAt: true, updatedAt: true };
+const userSelect = { id: true, name: true, email: true, role: true, isActive: true, lastLogin: true, createdAt: true, updatedAt: true };
 
 export const getProfile = async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId }, select: userSelect });
