@@ -1,9 +1,9 @@
 import prisma from '../../../lib/prisma.js';
 
 export const getRooms = async (req, res) => {
-  const { roomType, status, search, page = 1, limit = 20 } = req.query;
+  const { areaOfStay, status, search, page = 1, limit = 20 } = req.query;
   const where = {};
-  if (roomType) where.roomType = roomType;
+  if (areaOfStay) where.areaOfStay = areaOfStay;
   if (status) where.status = status;
   if (search) {
     where.OR = [
@@ -42,7 +42,7 @@ export const createRoom = async (req, res) => {
       entityType: 'Room',
       entityId: room.id,
       actorId: req.userId,
-      changes: { roomNumber: room.roomNumber, roomType: room.roomType },
+      changes: { roomNumber: room.roomNumber, areaOfStay: room.areaOfStay },
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
       severity: 'Info',
