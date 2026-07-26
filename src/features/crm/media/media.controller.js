@@ -23,7 +23,6 @@ export const getMedia = async (req, res) => {
   const { tag } = req.query;
   const where = tag ? { tag: { equals: tag, mode: 'insensitive' } } : {};
   const items = await prisma.media.findMany({ where, orderBy: { createdAt: 'desc' } });
-  res.set('Cache-Control', 'public, max-age=300');
   res.json(items);
 };
 

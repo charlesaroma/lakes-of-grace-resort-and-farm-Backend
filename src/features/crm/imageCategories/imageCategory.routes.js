@@ -15,7 +15,7 @@ router.use(requireAuth);
 router.get('/', getImageCategories);
 router.get('/:id', getImageCategory);
 router.post('/', createImageCategory);
-router.put('/:id', updateImageCategory);
+router.patch('/:id', updateImageCategory);
 router.delete('/:id', deleteImageCategory);
 
 export default router;

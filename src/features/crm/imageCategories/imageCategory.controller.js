@@ -23,8 +23,20 @@ export const createImageCategory = async (req, res) => {
 export const updateImageCategory = async (req, res) => {
   const result = updateImageCategorySchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+
+  const old = await prisma.imageCategory.findUnique({ where: { id: req.params.id } });
+  if (!old) return res.status(404).json({ message: 'Image category not found' });
+
   const item = await prisma.imageCategory.update({ where: { id: req.params.id }, data: result.data });
-  if (!item) return res.status(404).json({ message: 'Image category not found' });
+
+  if (result.data.name !== undefined && result.data.name !== old.name) {
+    await prisma.media.updateMany({
+      where: { tag: old.name },
+      data: { tag: result.data.name },
+    });
+    req.app.get('io').emit('media:categoryRenamed');
+  }
+
   req.app.get('io').emit('imageCategories:updated', item);
   res.json(item);
 };
