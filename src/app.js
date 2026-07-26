@@ -7,6 +7,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import rateLimit from 'express-rate-limit';
+import { Prisma } from '@prisma/client';
 import { env } from './config/env.js';
 
 // ─── Constants ───
@@ -130,6 +131,18 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ message: `Upload error: ${err.message}` });
+  }
+  next(err);
+});
+
+app.use((err, req, res, next) => {
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ message: 'A record with this value already exists' });
+    }
+    if (err.code === 'P2025') {
+      return res.status(404).json({ message: 'Record not found' });
+    }
   }
   next(err);
 });

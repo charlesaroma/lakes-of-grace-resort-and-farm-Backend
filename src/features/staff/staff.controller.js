@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma.js';
 import { createStaffSchema, updateStaffSchema } from '../../../shared/schemas/staff.schema.js';
 
@@ -164,7 +165,19 @@ export const linkUser = async (req, res) => {
     return res.status(400).json({ message: 'User already linked to a staff profile' });
   }
 
-  await prisma.staff.update({ where: { id }, data: { userId } });
+  try {
+    await prisma.staff.update({ where: { id, userId: null }, data: { userId } });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002') {
+        return res.status(409).json({ message: 'User already linked to a different staff profile' });
+      }
+      if (err.code === 'P2025') {
+        return res.status(400).json({ message: 'Staff was just linked by another request' });
+      }
+    }
+    throw err;
+  }
 
   await prisma.auditLog.create({
     data: {
