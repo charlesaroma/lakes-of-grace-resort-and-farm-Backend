@@ -6,3 +6,10 @@ export const createImageCategorySchema = z.object({
 });
 
 export const updateImageCategorySchema = createImageCategorySchema.partial();
+
+export const reorderImageCategoriesSchema = z.object({
+  categories: z.array(z.object({
+    id: z.string(),
+    sortOrder: z.number().int().min(0),
+  })),
+});

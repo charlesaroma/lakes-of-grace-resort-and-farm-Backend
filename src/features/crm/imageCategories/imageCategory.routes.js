@@ -6,6 +6,7 @@ import {
   createImageCategory,
   updateImageCategory,
   deleteImageCategory,
+  reorderImageCategories,
 } from './imageCategory.controller.js';
 
 const router = Router();
@@ -15,6 +16,7 @@ router.use(requireAuth);
 router.get('/', getImageCategories);
 router.get('/:id', getImageCategory);
 router.post('/', createImageCategory);
+router.put('/reorder', reorderImageCategories);
 router.patch('/:id', updateImageCategory);
 router.delete('/:id', deleteImageCategory);
 
