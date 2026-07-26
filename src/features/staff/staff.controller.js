@@ -166,14 +166,14 @@ export const linkUser = async (req, res) => {
   }
 
   try {
-    await prisma.staff.update({ where: { id, userId: null }, data: { userId } });
+    await prisma.staff.update({ where: { id }, data: { userId } });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2002') {
         return res.status(409).json({ message: 'User already linked to a different staff profile' });
       }
       if (err.code === 'P2025') {
-        return res.status(400).json({ message: 'Staff was just linked by another request' });
+        return res.status(400).json({ message: 'Staff record not found' });
       }
     }
     throw err;
