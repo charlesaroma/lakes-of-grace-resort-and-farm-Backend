@@ -99,7 +99,7 @@ export const createMedia = async (req, res) => {
 
 export const deleteMedia = async (req, res) => {
   const item = await prisma.media.findUnique({ where: { id: req.params.id } });
-  if (!item) return res.status(404).json({ message: 'Media not found' });
+  if (!item) return res.json({ message: 'Media already deleted' });
   await prisma.media.delete({ where: { id: req.params.id } });
 
   if (item.fileId) {
