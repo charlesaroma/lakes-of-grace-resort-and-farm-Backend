@@ -53,7 +53,7 @@ export const createCheckIn = async (req, res) => {
     },
   });
 
-  await prisma.room.update({ where: { roomNumber: result.data.roomNumber }, data: { status: 'Booked' } });
+  await prisma.room.update({ where: { roomNumber: result.data.roomNumber }, data: { status: 'Occupied' } });
 
   req.app.get('io')?.emit?.('checkin:created', checkIn);
   req.app.get('io')?.emit?.('booking:updated', { _id: result.data.bookingId });
@@ -87,7 +87,7 @@ export const updateCheckIn = async (req, res) => {
   if (!checkIn) return res.status(404).json({ message: 'Check-in not found' });
 
   if (updateData.status === 'Checked-Out') {
-    await prisma.room.update({ where: { roomNumber: checkIn.roomNumber }, data: { status: 'Cleaning' } });
+    await prisma.room.update({ where: { roomNumber: checkIn.roomNumber }, data: { status: 'Available' } });
 
     if (checkIn.bookingId) {
       const activeCount = await prisma.checkIn.count({

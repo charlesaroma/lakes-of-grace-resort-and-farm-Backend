@@ -158,21 +158,6 @@ export const updateBooking = async (req, res) => {
     });
   }
 
-  if (newStatus === 'Checked-In' && currentStatus !== 'Checked-In') {
-    const firstRoom = existing.rooms?.[0] || '';
-    await prisma.checkIn.create({
-      data: {
-        guestName: existing.guestName,
-        guestPhone: existing.phone || '',
-        roomNumber: firstRoom,
-        bookingId: existing.id,
-        expectedCheckOut: existing.checkOut.toISOString(),
-        numberOfGuests: existing.guests || 1,
-        status: 'Checked-In',
-      },
-    });
-  }
-
   const booking = await prisma.booking.update({ where: { id: req.params.id }, data: result.data });
   await prisma.auditLog.create({
     data: {
