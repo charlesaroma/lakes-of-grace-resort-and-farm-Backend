@@ -124,6 +124,7 @@ model User {
   role         String    @default("staff")
   isActive     Boolean   @default(true)
   lastLogin    DateTime?
+  lastLogoutAll DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

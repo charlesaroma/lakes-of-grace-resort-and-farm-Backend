@@ -59,6 +59,19 @@ export const logout = async (req, res) => {
   res.json({ message: 'Logged out' });
 };
 
+export const logoutAll = async (req, res) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { lastLogoutAll: new Date() },
+    });
+    res.json({ message: 'Logged out of all devices' });
+  } catch (err) {
+    console.error('Logout all error:', err);
+    res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+};
+
 export const changePassword = async (req, res) => {
   const result = changePasswordSchema.safeParse(req.body);
   if (!result.success) {
