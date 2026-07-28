@@ -49,6 +49,7 @@ import staffRoutes from './features/staff/staff.routes.js';
 import cottageRoutes from './features/crm/cottages/cottage.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 import departmentRoutes from './features/departments/department.routes.js';
+import optionsRoutes from './features/options/options.routes.js';
 // import paymentRoutes from './features/payments/payment.routes.js';
 
 // ─── App Initialization ───
@@ -121,6 +122,7 @@ app.use('/api/crm/departments', departmentRoutes);
 app.use('/api/crm/dashboard', dashboardRoutes);
 
 app.use('/api/media', publicRoutes);
+app.use('/api/options', optionsRoutes);
 
 // app.use('/api/payments', paymentRoutes);
 
