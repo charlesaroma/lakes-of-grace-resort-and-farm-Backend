@@ -2,6 +2,14 @@ import prisma from '../../../lib/prisma.js';
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+const VALID_TRANSITIONS = {
+  'Pending': ['Confirmed', 'Cancelled'],
+  'Confirmed': ['Checked-In', 'Cancelled'],
+  'Checked-In': ['Checked-Out'],
+  'Checked-Out': [],
+  'Cancelled': [],
+};
+
 function formatBooking(b) {
   const nights = Math.max(1, Math.round((b.checkOut - b.checkIn) / (1000 * 60 * 60 * 24)));
   const dateStr = `${b.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${b.checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
@@ -21,6 +29,12 @@ function formatBooking(b) {
     checkIn: b.checkIn,
     checkOut: b.checkOut,
     guests: b.guests,
+    bookingType: b.bookingType,
+    rooms: b.rooms,
+    phone: b.phone,
+    specialRequests: b.specialRequests,
+    paymentMethod: b.paymentMethod,
+    totalAmount: b.totalAmount,
   };
 }
 
@@ -38,14 +52,14 @@ function formatRecentBooking(b) {
 export const getBookings = async (req, res) => {
   const { status } = req.query;
   const where = status && status !== 'All' ? { status } : {};
-  const bookings = await prisma.booking.findMany({ where, orderBy: { createdAt: 'desc' } });
+  const bookings = await prisma.booking.findMany({ where, orderBy: { createdAt: 'desc' }, include: { checkIns: true } });
   res.json(bookings.map(formatBooking));
 };
 
 export const getBooking = async (req, res) => {
-  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id }, include: { checkIns: true } });
   if (!booking) return res.status(404).json({ message: 'Booking not found' });
-  res.json(formatBooking(booking));
+  res.json({ ...formatBooking(booking), checkIns: booking.checkIns });
 };
 
 export const getRecentBookings = async (req, res) => {
@@ -116,8 +130,50 @@ export const updateBooking = async (req, res) => {
   if (!result.success) {
     return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   }
+
+  const existing = await prisma.booking.findUnique({ where: { id: req.params.id } });
+  if (!existing) return res.status(404).json({ message: 'Booking not found' });
+
+  const currentStatus = existing.status;
+  const newStatus = result.data.status;
+
+  if (newStatus && newStatus !== currentStatus) {
+    const allowed = VALID_TRANSITIONS[currentStatus];
+    if (!allowed || !allowed.includes(newStatus)) {
+      return res.status(400).json({ message: `Cannot transition from '${currentStatus}' to '${newStatus}'` });
+    }
+  }
+
+  if ((newStatus === 'Confirmed' || currentStatus === 'Confirmed') && result.data.rooms?.length) {
+    await prisma.room.updateMany({
+      where: { roomNumber: { in: result.data.rooms } },
+      data: { status: 'Reserved' },
+    });
+  }
+
+  if (result.data.status === 'Cancelled' && existing.rooms?.length) {
+    await prisma.room.updateMany({
+      where: { roomNumber: { in: existing.rooms }, status: 'Reserved' },
+      data: { status: 'Available' },
+    });
+  }
+
+  if (newStatus === 'Checked-In' && currentStatus !== 'Checked-In') {
+    const firstRoom = existing.rooms?.[0] || '';
+    await prisma.checkIn.create({
+      data: {
+        guestName: existing.guestName,
+        guestPhone: existing.phone || '',
+        roomNumber: firstRoom,
+        bookingId: existing.id,
+        expectedCheckOut: existing.checkOut.toISOString(),
+        numberOfGuests: existing.guests || 1,
+        status: 'Checked-In',
+      },
+    });
+  }
+
   const booking = await prisma.booking.update({ where: { id: req.params.id }, data: result.data });
-  if (!booking) return res.status(404).json({ message: 'Booking not found' });
   await prisma.auditLog.create({
     data: {
       action: 'Booking Updated',

@@ -15,6 +15,8 @@ export const createBookingSchema = z.object({
   paymentMethod: z.string().optional(),
   phone: z.string().optional(),
   specialRequests: z.string().optional(),
+  bookingType: z.enum(['Individual', 'Company', 'Organization']).optional().default('Individual'),
+  rooms: z.array(z.string()).optional().default([]),
 });
 
 export const updateBookingSchema = createBookingSchema.partial();

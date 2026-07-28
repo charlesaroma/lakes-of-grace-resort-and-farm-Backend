@@ -35,6 +35,16 @@ export const createCheckIn = async (req, res) => {
   const active = await prisma.checkIn.findFirst({ where: { roomNumber: result.data.roomNumber, status: 'Checked-In' } });
   if (active) return res.status(409).json({ message: 'Room is already checked in' });
 
+  if (result.data.bookingId) {
+    const booking = await prisma.booking.findUnique({ where: { id: result.data.bookingId } });
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (booking.status !== 'Confirmed') return res.status(400).json({ message: 'Booking must be Confirmed before check-in' });
+    if (booking.rooms?.length && !booking.rooms.includes(result.data.roomNumber)) {
+      return res.status(400).json({ message: `Room ${result.data.roomNumber} is not assigned to this booking` });
+    }
+    await prisma.booking.update({ where: { id: booking.id }, data: { status: 'Checked-In' } });
+  }
+
   const checkIn = await prisma.checkIn.create({
     data: {
       ...result.data,
@@ -46,13 +56,14 @@ export const createCheckIn = async (req, res) => {
   await prisma.room.update({ where: { roomNumber: result.data.roomNumber }, data: { status: 'Booked' } });
 
   req.app.get('io')?.emit?.('checkin:created', checkIn);
+  req.app.get('io')?.emit?.('booking:updated', { _id: result.data.bookingId });
   await prisma.auditLog.create({
       data: {
         action: 'Guest Checked In',
       entityType: 'CheckIn',
       entityId: checkIn.id,
       actorId: req.userId,
-      changes: { guestName: result.data.guestName, roomNumber: result.data.roomNumber },
+      changes: { guestName: result.data.guestName, roomNumber: result.data.roomNumber, bookingId: result.data.bookingId },
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
       severity: 'Info',
@@ -77,14 +88,24 @@ export const updateCheckIn = async (req, res) => {
 
   if (updateData.status === 'Checked-Out') {
     await prisma.room.update({ where: { roomNumber: checkIn.roomNumber }, data: { status: 'Cleaning' } });
-    req.app.get('io')?.emit?.('checkin:updated', checkIn);
+
+    if (checkIn.bookingId) {
+      const activeCount = await prisma.checkIn.count({
+        where: { bookingId: checkIn.bookingId, status: 'Checked-In' },
+      });
+      if (activeCount === 0) {
+        await prisma.booking.update({ where: { id: checkIn.bookingId }, data: { status: 'Checked-Out' } });
+        req.app.get('io')?.emit?.('booking:updated', { _id: checkIn.bookingId });
+      }
+    }
+
     await prisma.auditLog.create({
       data: {
         action: 'Guest Checked Out',
         entityType: 'CheckIn',
         entityId: checkIn.id,
         actorId: req.userId,
-        changes: { guestName: checkIn.guestName, roomNumber: checkIn.roomNumber },
+        changes: { guestName: checkIn.guestName, roomNumber: checkIn.roomNumber, bookingId: checkIn.bookingId },
         ipAddress: req.ip,
         userAgent: req.get('user-agent'),
         severity: 'Info',

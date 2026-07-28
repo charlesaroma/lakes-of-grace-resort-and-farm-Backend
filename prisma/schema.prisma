@@ -185,10 +185,12 @@ model Booking {
   pesapalTrackingId String?
   phone             String?
   specialRequests   String?
+  bookingType       String   @default("Individual")
+  rooms             String[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  checkInRecord CheckIn?
+  checkIns CheckIn[]
 
   @@index([areaOfStay, checkIn])
   @@index([guestEmail, status])
@@ -289,7 +291,7 @@ model CheckIn {
   guestName        String
   guestPhone       String
   roomNumber       String
-  bookingId        String?   @unique @db.ObjectId
+  bookingId String? @db.ObjectId
   checkInTime      DateTime
   expectedCheckOut DateTime
   actualCheckOut   DateTime?
