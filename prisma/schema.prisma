@@ -209,6 +209,8 @@ model Room {
   isStaffResidence    Boolean  @default(false)
   isVipSuite          Boolean  @default(false)
   isOutOfInventory    Boolean  @default(false)
+  housekeeper         String?
+  manager             String?
   customFullBoardRate Float?
   customHalfBoardRate Float?
   customBnBRate       Float?

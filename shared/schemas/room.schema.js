@@ -11,6 +11,8 @@ export const createRoomSchema = z.object({
   isStaffResidence: z.boolean().default(false),
   isVipSuite: z.boolean().default(false),
   isOutOfInventory: z.boolean().default(false),
+  housekeeper: z.string().optional().nullable(),
+  manager: z.string().optional().nullable(),
   customFullBoardRate: z.number().min(0, 'Rate must be >= 0').optional().nullable(),
   customHalfBoardRate: z.number().min(0, 'Rate must be >= 0').optional().nullable(),
   customBnBRate: z.number().min(0, 'Rate must be >= 0').optional().nullable(),
