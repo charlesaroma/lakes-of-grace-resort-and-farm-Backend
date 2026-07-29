@@ -30,6 +30,8 @@ function formatBooking(b) {
     checkOut: b.checkOut,
     guests: b.guests,
     bookingType: b.bookingType,
+    organizationName: b.organizationName,
+    roomsRequested: b.roomsRequested,
     rooms: b.rooms,
     phone: b.phone,
     specialRequests: b.specialRequests,
@@ -49,17 +51,22 @@ function formatRecentBooking(b) {
   };
 }
 
+function getRoomNumbers(rooms) {
+  if (!Array.isArray(rooms)) return [];
+  return rooms.map((r) => (typeof r === 'string' ? r : r.roomNumber)).filter(Boolean);
+}
+
 export const getBookings = async (req, res) => {
   const { status } = req.query;
   const where = status && status !== 'All' ? { status } : {};
-  const bookings = await prisma.booking.findMany({ where, orderBy: { createdAt: 'desc' }, include: { checkIns: true } });
+  const bookings = await prisma.booking.findMany({ where, orderBy: { createdAt: 'desc' } });
   res.json(bookings.map(formatBooking));
 };
 
 export const getBooking = async (req, res) => {
-  const booking = await prisma.booking.findUnique({ where: { id: req.params.id }, include: { checkIns: true } });
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
   if (!booking) return res.status(404).json({ message: 'Booking not found' });
-  res.json({ ...formatBooking(booking), checkIns: booking.checkIns });
+  res.json(formatBooking(booking));
 };
 
 export const getRecentBookings = async (req, res) => {
@@ -144,16 +151,19 @@ export const updateBooking = async (req, res) => {
     }
   }
 
-  if ((newStatus === 'Confirmed' || currentStatus === 'Confirmed') && result.data.rooms?.length) {
+  const newRoomNumbers = result.data.rooms ? getRoomNumbers(result.data.rooms) : [];
+  const existingRoomNumbers = getRoomNumbers(existing.rooms);
+
+  if ((newStatus === 'Confirmed' || currentStatus === 'Confirmed') && newRoomNumbers.length) {
     await prisma.room.updateMany({
-      where: { roomNumber: { in: result.data.rooms } },
+      where: { roomNumber: { in: newRoomNumbers } },
       data: { status: 'Reserved' },
     });
   }
 
-  if (result.data.status === 'Cancelled' && existing.rooms?.length) {
+  if (result.data.status === 'Cancelled' && existingRoomNumbers.length) {
     await prisma.room.updateMany({
-      where: { roomNumber: { in: existing.rooms }, status: 'Reserved' },
+      where: { roomNumber: { in: existingRoomNumbers }, status: 'Reserved' },
       data: { status: 'Available' },
     });
   }
@@ -173,4 +183,202 @@ export const updateBooking = async (req, res) => {
   });
   req.app.get('io')?.emit?.('booking:updated', formatBooking(booking));
   res.json(formatBooking(booking));
+};
+
+// ─── Room-level controllers ───
+
+export const checkInRooms = async (req, res) => {
+  const { checkInRoomsSchema } = await import('../../../../shared/schemas/booking.schema.js');
+  const result = checkInRoomsSchema.safeParse(req.body);
+  if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
+  if (!booking) return res.status(404).json({ message: 'Booking not found' });
+  if (booking.status !== 'Confirmed') return res.status(400).json({ message: 'Booking must be Confirmed before check-in' });
+
+  const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
+  const roomNumber = result.data.roomNumber;
+
+  const roomIdx = rooms.findIndex((r) => r.roomNumber === roomNumber);
+  if (roomIdx === -1) return res.status(400).json({ message: `Room ${roomNumber} is not assigned to this booking` });
+  if (rooms[roomIdx].status !== 'Pending' && rooms[roomIdx].status !== 'Confirmed') {
+    return res.status(409).json({ message: `Room ${roomNumber} is already checked in` });
+  }
+
+  rooms[roomIdx] = { ...rooms[roomIdx], status: 'Checked-In', checkInTime: new Date() };
+
+  const allCheckedIn = rooms.every((r) => r.status === 'Checked-In');
+  const updated = await prisma.booking.update({
+    where: { id: req.params.id },
+    data: { rooms, status: allCheckedIn ? 'Checked-In' : undefined },
+  });
+
+  await prisma.room.updateMany({
+    where: { roomNumber },
+    data: { status: 'Occupied' },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'Room Checked In',
+      entityType: 'Booking',
+      entityId: booking.id,
+      actorId: req.userId,
+      changes: { roomNumber },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
+  });
+
+  req.app.get('io')?.emit?.('booking:updated', formatBooking(updated));
+  res.json(formatBooking(updated));
+};
+
+export const inspectRoom = async (req, res) => {
+  const { inspectRoomSchema } = await import('../../../../shared/schemas/booking.schema.js');
+  const result = inspectRoomSchema.safeParse(req.body);
+  if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
+  if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+  const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
+  const roomIdx = parseInt(req.params.roomIdx);
+  if (isNaN(roomIdx) || roomIdx < 0 || roomIdx >= rooms.length) {
+    return res.status(400).json({ message: 'Invalid room index' });
+  }
+
+  rooms[roomIdx] = { ...rooms[roomIdx], inspection: result.data.inspection };
+
+  if (result.data.checkOut) {
+    rooms[roomIdx] = { ...rooms[roomIdx], status: 'Checked-Out', actualCheckOut: new Date() };
+
+    await prisma.room.updateMany({
+      where: { roomNumber: rooms[roomIdx].roomNumber },
+      data: { status: 'Available' },
+    });
+
+    const allCheckedOut = rooms.every((r) => r.status === 'Checked-Out' || r.status === 'Cancelled');
+    const updated = await prisma.booking.update({
+      where: { id: req.params.id },
+      data: { rooms, status: allCheckedOut ? 'Checked-Out' : undefined },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        action: 'Room Checked Out',
+        entityType: 'Booking',
+        entityId: booking.id,
+        actorId: req.userId,
+        changes: { roomNumber: rooms[roomIdx].roomNumber },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        severity: 'Info',
+      },
+    });
+
+    req.app.get('io')?.emit?.('booking:updated', formatBooking(updated));
+    return res.json(formatBooking(updated));
+  }
+
+  const updated = await prisma.booking.update({
+    where: { id: req.params.id },
+    data: { rooms },
+  });
+
+  req.app.get('io')?.emit?.('booking:updated', formatBooking(updated));
+  res.json(formatBooking(updated));
+};
+
+export const extendRoom = async (req, res) => {
+  const { extendRoomSchema } = await import('../../../../shared/schemas/booking.schema.js');
+  const result = extendRoomSchema.safeParse(req.body);
+  if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
+  if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+  const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
+  const roomIdx = parseInt(req.params.roomIdx);
+  if (isNaN(roomIdx) || roomIdx < 0 || roomIdx >= rooms.length) {
+    return res.status(400).json({ message: 'Invalid room index' });
+  }
+
+  rooms[roomIdx] = { ...rooms[roomIdx], expectedCheckOut: new Date(result.data.expectedCheckOut) };
+
+  const updated = await prisma.booking.update({
+    where: { id: req.params.id },
+    data: { rooms },
+  });
+
+  req.app.get('io')?.emit?.('booking:updated', formatBooking(updated));
+  res.json(formatBooking(updated));
+};
+
+export const updateRoom = async (req, res) => {
+  const { updateRoomSchema } = await import('../../../../shared/schemas/booking.schema.js');
+  const result = updateRoomSchema.safeParse(req.body);
+  if (!result.success) return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
+  if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+  const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
+  const roomIdx = parseInt(req.params.roomIdx);
+  if (isNaN(roomIdx) || roomIdx < 0 || roomIdx >= rooms.length) {
+    return res.status(400).json({ message: 'Invalid room index' });
+  }
+
+  rooms[roomIdx] = { ...rooms[roomIdx], ...result.data };
+
+  const updated = await prisma.booking.update({
+    where: { id: req.params.id },
+    data: { rooms },
+  });
+
+  req.app.get('io')?.emit?.('booking:updated', formatBooking(updated));
+  res.json(formatBooking(updated));
+};
+
+export const removeRoom = async (req, res) => {
+  const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
+  if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+  const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
+  const roomIdx = parseInt(req.params.roomIdx);
+  if (isNaN(roomIdx) || roomIdx < 0 || roomIdx >= rooms.length) {
+    return res.status(400).json({ message: 'Invalid room index' });
+  }
+
+  const removed = rooms[roomIdx];
+  rooms.splice(roomIdx, 1);
+
+  if (removed.status === 'Checked-In') {
+    await prisma.room.updateMany({
+      where: { roomNumber: removed.roomNumber },
+      data: { status: 'Available' },
+    });
+  }
+
+  const updated = await prisma.booking.update({
+    where: { id: req.params.id },
+    data: { rooms },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'Room Removed from Booking',
+      entityType: 'Booking',
+      entityId: booking.id,
+      actorId: req.userId,
+      changes: { roomNumber: removed.roomNumber },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
+  });
+
+  req.app.get('io')?.emit?.('booking:updated', formatBooking(updated));
+  res.json(formatBooking(updated));
 };

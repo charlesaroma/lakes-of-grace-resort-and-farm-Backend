@@ -107,7 +107,6 @@ enum EntityType {
   TagConfig
   Room
   Review
-  CheckIn
   Guideline
   ConferenceHall
   Notification
@@ -186,11 +185,11 @@ model Booking {
   phone             String?
   specialRequests   String?
   bookingType       String   @default("Individual")
-  rooms             String[]
+  organizationName  String?
+  roomsRequested    Int      @default(1)
+  rooms             Json      @default("[]")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-
-  checkIns CheckIn[]
 
   @@index([areaOfStay, checkIn])
   @@index([guestEmail, status])
@@ -286,29 +285,6 @@ model Evaluation {
 
   @@index([email, arrivalDate])
   @@map("evaluations")
-}
-
-model CheckIn {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  guestName        String
-  guestPhone       String
-  roomNumber       String
-  bookingId String? @db.ObjectId
-  checkInTime      DateTime
-  expectedCheckOut DateTime
-  actualCheckOut   DateTime?
-  status           String   @default("Checked-In")
-  idProof          String?
-  notes            String?
-  vehicleNumber    String?
-  numberOfGuests   Int?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  booking Booking? @relation(fields: [bookingId], references: [id])
-
-  @@index([status, bookingId])
-  @@map("check_ins")
 }
 
 model Notification {
