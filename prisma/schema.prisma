@@ -310,6 +310,7 @@ model StockItem {
   quantity  Int      @default(0)
   unit      String   @default("pieces")
   threshold Int      @default(0)
+  parLevel  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -455,4 +456,43 @@ model ImageCategory {
   updatedAt   DateTime @updatedAt
 
   @@map("image_categories")
+}
+
+model Requisition {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  reference      String    @unique
+  department     String
+  requestedBy    String
+  requestedById  String?   @db.ObjectId
+  note           String?
+  status         String    @default("pending")
+  approvedById   String?   @db.ObjectId
+  approvedByName String?
+  approvedAt     DateTime?
+  fulfilledAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  items RequisitionItem[]
+
+  @@index([status, createdAt])
+  @@map("requisitions")
+}
+
+model RequisitionItem {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  requisitionId     String   @db.ObjectId
+  itemId            String   @db.ObjectId
+  item              String
+  unit              String   @default("pieces")
+  quantityRequested Int
+  quantityFulfilled Int      @default(0)
+  note              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  requisition Requisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+
+  @@index([requisitionId])
+  @@map("requisition_items")
 }
