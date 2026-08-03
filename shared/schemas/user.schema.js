@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const roles = ['staff', 'admin', 'manager', 'system_developer', 'front_desk', 'kitchen_view', 'housekeeper_mobile'] ;
+const roles = ['staff', 'admin', 'manager', 'system_developer', 'front_desk', 'kitchen_view', 'housekeeper_mobile', 'kitchen_manager', 'farm_staff'];
 
 export const createUserSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),

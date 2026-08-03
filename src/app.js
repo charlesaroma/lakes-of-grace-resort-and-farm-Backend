@@ -37,6 +37,7 @@ import zoneHousekeeperRoutes from './features/crm/rooms/zoneHousekeeper.routes.j
 import imageCategoryRoutes from './features/crm/imageCategories/imageCategory.routes.js';
 import stockRoutes from './features/crm/stock/stock.routes.js';
 import requisitionRoutes from './features/crm/requisitions/requisition.routes.js';
+import procurementRoutes from './features/crm/procurement/procurement.routes.js';
 import menuRoutes from './features/crm/menu/menu.routes.js';
 import guestRoutes from './features/crm/guests/guest.routes.js';
 import inquiryRoutes from './features/crm/inquiries/inquiry.routes.js';
@@ -113,6 +114,7 @@ app.use('/api/crm/zone-housekeepers', zoneHousekeeperRoutes);
 app.use('/api/crm/image-categories', imageCategoryRoutes);
 app.use('/api/crm/stock', stockRoutes);
 app.use('/api/crm/requisitions', requisitionRoutes);
+app.use('/api/crm/procurement', procurementRoutes);
 app.use('/api/crm/menu', menuRoutes);
 app.use('/api/crm/guests', guestRoutes);
 app.use('/api/crm/inquiries', inquiryRoutes);

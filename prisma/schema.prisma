@@ -18,6 +18,9 @@ enum UserRole {
   front_desk
   kitchen_view
   housekeeper_mobile
+  kitchen_manager
+  accountant
+  farm_staff
 }
 
 enum AreaOfStay {
@@ -72,6 +75,8 @@ enum StockLedgerType {
   restock
   dispatch
   adjustment
+  production
+  transfer
 }
 
 enum MenuStatus {
@@ -304,19 +309,36 @@ model Notification {
 }
 
 model StockItem {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  item           String    @unique
+  category       String
+  quantity       Int       @default(0)
+  unit           String    @default("pieces")
+  threshold      Int       @default(0)
+  parLevel       Int       @default(0)
+  perishable     Boolean   @default(false)
+  avgDailyUsage  Float?
+  lastRestocked  DateTime?
+  lastDispatched DateTime?
+  locationId     String?   @db.ObjectId
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  stockLedgers StockLedger[]
+  batches      StockBatch[]
+  location     StockLocation? @relation(fields: [locationId], references: [id])
+
+  @@map("stock_items")
+}
+
+model StockCategory {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  item      String   @unique
-  category  String
-  quantity  Int      @default(0)
-  unit      String   @default("pieces")
-  threshold Int      @default(0)
-  parLevel  Int      @default(0)
+  name      String   @unique
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stockLedgers StockLedger[]
-
-  @@map("stock_items")
+  @@map("stock_categories")
 }
 
 model StockLedger {
@@ -495,4 +517,91 @@ model RequisitionItem {
 
   @@index([requisitionId])
   @@map("requisition_items")
+}
+
+// ─── Inventory extension ───
+
+model StockLocation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  type      String   @default("department") // central | department
+  parentId  String?  @db.ObjectId
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items StockItem[]
+
+  @@map("stock_locations")
+}
+
+model StockBatch {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  itemId       String    @db.ObjectId
+  item         String
+  quantity     Int
+  source       String    @default("supplier") // farm | supplier
+  receivedDate DateTime  @default(now())
+  expiryDate   DateTime?
+  ledgerId     String?   @db.ObjectId
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  stockItem StockItem @relation(fields: [itemId], references: [id])
+
+  @@index([itemId, expiryDate])
+  @@map("stock_batches")
+}
+
+model PettyCashLedger {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  type          String   // float_top_up | surplus_returned | reallocation_out | reallocation_in | procurement_payment
+  amount        Float
+  balance       Float    @default(0)
+  requisitionId String?  @db.ObjectId
+  note          String?
+  userId        String?  @db.ObjectId
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("petty_cash_ledgers")
+}
+
+model ProcurementRequisition {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  reference          String    @unique
+  itemId             String    @db.ObjectId
+  item               String
+  unit               String    @default("pieces")
+  quantityNeeded     Int
+  neededBy           DateTime?
+  status             String    @default("draft") // draft | approved | ordered | fulfilled | cancelled
+  source             String?   // farm | supplier
+  bookingIds         String[]
+  forecastGuests     Int       @default(0)
+  forecastNights     Int       @default(0)
+  forecastAmount     Int       @default(0)
+  farmCoverage       Int       @default(0)
+  unitPriceEstimated Float?
+  unitPriceActual    Float?
+  estimatedCost      Float?
+  actualCost         Float?
+  receiptUrls        String[]
+  surplusAction      String?   // reallocated | returned_to_petty_cash
+  surplusAmount      Int?
+  reallocatedTo      String?   // locationId
+  flagForReview      Boolean   @default(false)
+  createdById        String?   @db.ObjectId
+  createdByName      String?
+  approvedById       String?   @db.ObjectId
+  approvedByName     String?
+  approvedAt         DateTime?
+  orderedAt          DateTime?
+  fulfilledAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([itemId, status])
+  @@map("procurement_requisitions")
 }

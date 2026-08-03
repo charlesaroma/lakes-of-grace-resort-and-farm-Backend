@@ -1,15 +1,22 @@
 import prisma from '../../../lib/prisma.js';
+import { getStatus, computeDaysLeft, suggestedRestockQty } from '../../../core/utils/stockStatus.js';
 
-const EDITABLE_FIELDS = ['item', 'category', 'unit', 'threshold', 'parLevel'];
+const EDITABLE_FIELDS = ['item', 'category', 'unit', 'threshold', 'parLevel', 'locationId'];
 
 export const getStockAlerts = async (req, res) => {
-  const items = await prisma.stockItem.findMany();
-  const alerts = items.filter((i) => i.quantity <= i.threshold);
+  const where = {};
+  if (req.query.locationId) where.locationId = req.query.locationId;
+  const items = await prisma.stockItem.findMany({ where });
+  const alerts = items
+    .filter((i) => i.quantity <= i.threshold)
+    .map((item) => ({ ...item, status: getStatus(item.quantity, item.threshold) }));
   res.json(alerts);
 };
 
 export const getStockLevels = async (req, res) => {
-  const items = await prisma.stockItem.findMany({ orderBy: { item: 'asc' } });
+  const where = {};
+  if (req.query.locationId) where.locationId = req.query.locationId;
+  const items = await prisma.stockItem.findMany({ where, orderBy: { item: 'asc' }, include: { location: true } });
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const [dispatchRows, lastRestocks, lastDispatches] = await Promise.all([
@@ -38,16 +45,14 @@ export const getStockLevels = async (req, res) => {
     const consumed = consumedMap.get(item.id) || 0;
     const avgDaily = consumed / 30;
 
-    let status = 'Optimal';
-    if (item.quantity <= 0) status = 'Out of Stock';
-    else if (item.threshold > 0 && item.quantity <= Math.floor(item.threshold * 0.25)) status = 'Critical';
-    else if (item.quantity <= item.threshold) status = 'Low Stock';
+    const status = getStatus(item.quantity, item.threshold);
 
     return {
       ...item,
       status,
       avgDailyConsumption: Math.round(avgDaily * 10) / 10,
-      daysLeft: avgDaily > 0 ? Math.round((item.quantity / avgDaily) * 10) / 10 : null,
+      daysLeft: computeDaysLeft(item.quantity, avgDaily),
+      suggestedRestockQty: suggestedRestockQty(item, avgDaily),
       lastRestockedAt: restockedAtMap.get(item.id) || null,
       lastDispatchedAt: dispatchedAtMap.get(item.id) || null,
     };
@@ -184,23 +189,37 @@ export const restockItem = async (req, res) => {
   res.status(201).json({ item: updatedItem, ledger });
 };
 
+const DISPATCH_DEPARTMENTS = ['kitchen', 'housekeeping', 'farm', 'maintenance'];
+
 export const dispatchItem = async (req, res) => {
   const { quantity, department, purpose, note } = req.body;
+
+  const parsedQuantity = Number(quantity);
+  if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
+    return res.status(400).json({ message: 'Quantity must be a positive number' });
+  }
+  if (typeof department !== 'string' || !DISPATCH_DEPARTMENTS.includes(department)) {
+    return res.status(400).json({ message: 'Department is required and must be a valid department' });
+  }
+  if (typeof purpose !== 'string' || !purpose.trim()) {
+    return res.status(400).json({ message: 'Purpose of dispatch is required' });
+  }
+
   const item = await prisma.stockItem.findUnique({ where: { id: req.params.id } });
   if (!item) return res.status(404).json({ message: 'Stock item not found' });
 
-  if (item.quantity < quantity) {
+  if (item.quantity < parsedQuantity) {
     return res.status(400).json({ message: 'Insufficient stock' });
   }
 
-  const newQuantity = item.quantity - quantity;
+  const newQuantity = item.quantity - parsedQuantity;
   const { updatedItem, ledger } = await prisma.$transaction(async (tx) => {
     const ledger = await tx.stockLedger.create({
       data: {
         itemId: item.id,
         item: item.item,
         type: 'dispatch',
-        quantity: -quantity,
+        quantity: -parsedQuantity,
         balance: newQuantity,
         department,
         purpose,
@@ -223,7 +242,7 @@ export const dispatchItem = async (req, res) => {
       entityType: 'Stock',
       entityId: item.id,
       actorId: req.userId,
-      changes: { item: item.item, quantity, department, purpose },
+      changes: { item: item.item, quantity: parsedQuantity, department, purpose },
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
       severity,
@@ -273,4 +292,95 @@ export const adjustStock = async (req, res) => {
   });
 
   res.status(201).json({ item: updatedItem, ledger });
+};
+
+export const transferStock = async (req, res) => {
+  const { destinationLocationId, quantity, note } = req.body;
+  const item = await prisma.stockItem.findUnique({ where: { id: req.params.id } });
+  if (!item) return res.status(404).json({ message: 'Stock item not found' });
+  if (!destinationLocationId) return res.status(400).json({ message: 'Destination location is required' });
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    return res.status(400).json({ message: 'Quantity must be a positive integer' });
+  }
+  if (String(destinationLocationId) === String(item.locationId)) {
+    return res.status(400).json({ message: 'Source and destination are the same location' });
+  }
+  if (item.quantity < quantity) {
+    return res.status(400).json({ message: 'Insufficient stock' });
+  }
+
+  const destination = await prisma.stockLocation.findUnique({ where: { id: destinationLocationId } });
+  if (!destination) return res.status(404).json({ message: 'Destination location not found' });
+  if (destination.isActive === false) {
+    return res.status(400).json({ message: 'Destination location is inactive' });
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const sourceQuantity = item.quantity - quantity;
+
+    let target = await tx.stockItem.findFirst({
+      where: { item: item.item, locationId: destinationLocationId },
+    });
+    if (!target) {
+      target = await tx.stockItem.create({
+        data: {
+          item: item.item,
+          category: item.category,
+          unit: item.unit,
+          threshold: item.threshold,
+          parLevel: item.parLevel,
+          perishable: item.perishable,
+          locationId: destinationLocationId,
+          quantity: 0,
+        },
+      });
+    }
+    const targetQuantity = target.quantity + quantity;
+
+    await tx.stockLedger.create({
+      data: {
+        itemId: item.id,
+        item: item.item,
+        type: 'transfer',
+        quantity: -quantity,
+        balance: sourceQuantity,
+        note: `Transferred to ${destination.name}${note ? ` — ${note}` : ''}`,
+        userId: req.userId,
+      },
+    });
+    await tx.stockLedger.create({
+      data: {
+        itemId: target.id,
+        item: item.item,
+        type: 'transfer',
+        quantity,
+        balance: targetQuantity,
+        note: `Transferred from ${item.location?.name || 'Central Store'}${note ? ` — ${note}` : ''}`,
+        userId: req.userId,
+      },
+    });
+
+    const [updatedSource, updatedTarget] = await Promise.all([
+      tx.stockItem.update({ where: { id: item.id }, data: { quantity: sourceQuantity } }),
+      tx.stockItem.update({ where: { id: target.id }, data: { quantity: targetQuantity } }),
+    ]);
+    return { updatedSource, updatedTarget };
+  });
+
+  req.app.get('io')?.emit?.('stockItems:updated', result.updatedSource);
+  req.app.get('io')?.emit?.('stockItems:updated', result.updatedTarget);
+  await prisma.auditLog.create({
+    data: {
+      action: 'Stock Transfer',
+      entityType: 'Stock',
+      entityId: item.id,
+      actorId: req.userId,
+      changes: { item: item.item, quantity, from: item.location?.name || 'Central Store', to: destination.name },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+      severity: 'Info',
+    },
+  });
+
+  res.status(201).json({ source: result.updatedSource, destination: result.updatedTarget });
 };
