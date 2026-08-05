@@ -157,7 +157,7 @@ export const updateBooking = async (req, res) => {
   const newRoomNumbers = result.data.rooms ? getRoomNumbers(result.data.rooms) : [];
   const existingRoomNumbers = getRoomNumbers(existing.rooms);
 
-  if ((newStatus === 'Confirmed' || currentStatus === 'Confirmed') && newRoomNumbers.length) {
+  if (newRoomNumbers.length) {
     await prisma.room.updateMany({
       where: { roomNumber: { in: newRoomNumbers } },
       data: { status: 'Reserved' },
@@ -203,7 +203,9 @@ export const checkInRooms = async (req, res) => {
 
   const booking = await prisma.booking.findUnique({ where: { id: req.params.id } });
   if (!booking) return res.status(404).json({ message: 'Booking not found' });
-  if (booking.status !== 'Confirmed') return res.status(400).json({ message: 'Booking must be Confirmed before check-in' });
+  if (booking.status !== 'Confirmed' && booking.status !== 'Checked-In') {
+    return res.status(400).json({ message: 'Booking must be Confirmed or Checked-In before check-in' });
+  }
 
   const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
   const roomNumber = result.data.rooms[0].roomNumber;

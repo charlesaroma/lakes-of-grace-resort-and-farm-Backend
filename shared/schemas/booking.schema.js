@@ -6,7 +6,7 @@ const roomSchema = z.object({
   guestPhone: z.string().optional().default(''),
   idProof: z.string().optional().default(''),
   numberOfGuests: z.number().int().min(1).optional().default(1),
-  vehicleNumber: z.string().optional().default(''),
+  specialRequests: z.string().optional().default(''),
   status: z.enum(['Pending', 'Checked-In', 'Checked-Out']).optional().default('Pending'),
   checkInTime: z.string().optional(),
   expectedCheckOut: z.string().min(1, 'Expected check-out date is required'),
@@ -94,7 +94,7 @@ export const updateRoomSchema = z.object({
   guestPhone: z.string().optional(),
   idProof: z.string().optional(),
   numberOfGuests: z.number().int().min(1).optional(),
-  vehicleNumber: z.string().optional(),
+  specialRequests: z.string().optional(),
   expectedCheckOut: z.string().optional(),
   roomNumber: z.string().optional(),
 });
