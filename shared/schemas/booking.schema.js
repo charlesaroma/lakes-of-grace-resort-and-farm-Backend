@@ -57,12 +57,17 @@ export const createBookingSchema = baseBookingSchema.refine(
   },
 );
 
-export const updateBookingSchema = baseBookingSchema.partial();
+// For updates: make all fields optional AND remove the 'Pending' default from status
+// so that omitting status from the request body doesn't inject 'Pending' and
+// trigger an invalid state transition (e.g. Checked-In → Pending).
+export const updateBookingSchema = baseBookingSchema
+  .partial()
+  .extend({
+    status: z.enum(['Pending', 'Confirmed', 'Checked-In', 'Checked-Out', 'Cancelled']).optional(),
+  });
 
 export const checkInRoomsSchema = z.object({
-  rooms: z.array(roomSchema.omit({ status: true, checkInTime: true, actualCheckOut: true, inspection: true }).extend({
-    checkInTime: z.string(),
-  }), { message: 'At least one room is required' }).min(1, 'At least one room is required'),
+  rooms: z.array(z.object({ roomNumber: z.string().min(1, 'Room number is required') }), { message: 'At least one room is required' }).min(1, 'At least one room is required'),
 });
 
 export const inspectRoomSchema = z.object({

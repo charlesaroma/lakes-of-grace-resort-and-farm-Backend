@@ -7,7 +7,7 @@ const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'
 const VALID_TRANSITIONS = {
   'Pending': ['Confirmed', 'Cancelled'],
   'Confirmed': ['Checked-In', 'Cancelled'],
-  'Checked-In': ['Checked-Out'],
+  'Checked-In': ['Checked-Out', 'Cancelled'],
   'Checked-Out': [],
   'Cancelled': [],
 };
@@ -166,7 +166,7 @@ export const updateBooking = async (req, res) => {
 
   if (result.data.status === 'Cancelled' && existingRoomNumbers.length) {
     await prisma.room.updateMany({
-      where: { roomNumber: { in: existingRoomNumbers }, status: 'Reserved' },
+      where: { roomNumber: { in: existingRoomNumbers }, status: { in: ['Reserved', 'Occupied'] } },
       data: { status: 'Available' },
     });
   }
@@ -206,7 +206,7 @@ export const checkInRooms = async (req, res) => {
   if (booking.status !== 'Confirmed') return res.status(400).json({ message: 'Booking must be Confirmed before check-in' });
 
   const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
-  const roomNumber = result.data.roomNumber;
+  const roomNumber = result.data.rooms[0].roomNumber;
 
   const roomIdx = rooms.findIndex((r) => r.roomNumber === roomNumber);
   if (roomIdx === -1) return res.status(400).json({ message: `Room ${roomNumber} is not assigned to this booking` });
@@ -363,12 +363,10 @@ export const removeRoom = async (req, res) => {
   const removed = rooms[roomIdx];
   rooms.splice(roomIdx, 1);
 
-  if (removed.status === 'Checked-In') {
-    await prisma.room.updateMany({
-      where: { roomNumber: removed.roomNumber },
-      data: { status: 'Available' },
-    });
-  }
+  await prisma.room.updateMany({
+    where: { roomNumber: removed.roomNumber, status: { in: ['Reserved', 'Occupied'] } },
+    data: { status: 'Available' },
+  });
 
   const updated = await prisma.booking.update({
     where: { id: req.params.id },
