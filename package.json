@@ -8,9 +8,7 @@
     "build": "prisma generate",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "seed:manager": "node scripts/seed-manager.js",
-    "seed:dev": "node scripts/seed-system-developers.js",
-    "seed:menu": "node scripts/seedMenuPrisma.js",
+    "backfill:guests": "node scripts/backfill-guests.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -32,8 +30,6 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.5.0",
     "multer": "^2.2.0",
-    "pg": "^8.22.0",
-    "pino": "^10.3.1",
     "prisma": "^5.22.0",
     "socket.io": "^4.8.3",
     "zod": "^4.4.3"
@@ -43,7 +39,7 @@
   },
   "allowScripts": {
     "bcrypt@6.0.0": true,
-    "@prisma/engines@7.9.0": true,
-    "prisma@7.9.0": true
+    "@prisma/engines@5.22.0": true,
+    "prisma@5.22.0": true
   }
 }
