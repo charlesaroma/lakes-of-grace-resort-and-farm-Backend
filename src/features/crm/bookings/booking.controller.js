@@ -208,15 +208,19 @@ export const checkInRooms = async (req, res) => {
   }
 
   const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
-  const roomNumber = result.data.rooms[0].roomNumber;
-
-  const roomIdx = rooms.findIndex((r) => r.roomNumber === roomNumber);
-  if (roomIdx === -1) return res.status(400).json({ message: `Room ${roomNumber} is not assigned to this booking` });
-  if (rooms[roomIdx].status !== 'Pending' && rooms[roomIdx].status !== 'Confirmed') {
-    return res.status(409).json({ message: `Room ${roomNumber} is already checked in` });
+  
+  const roomNumbersToUpdate = [];
+  for (const requestedRoom of result.data.rooms) {
+    const roomIdx = rooms.findIndex((r) => r.roomNumber === requestedRoom.roomNumber);
+    if (roomIdx !== -1 && (rooms[roomIdx].status === 'Pending' || rooms[roomIdx].status === 'Confirmed')) {
+      rooms[roomIdx] = { ...rooms[roomIdx], status: 'Checked-In', checkInTime: new Date() };
+      roomNumbersToUpdate.push(requestedRoom.roomNumber);
+    }
   }
 
-  rooms[roomIdx] = { ...rooms[roomIdx], status: 'Checked-In', checkInTime: new Date() };
+  if (roomNumbersToUpdate.length === 0) {
+    return res.status(400).json({ message: 'No valid rooms found to check in' });
+  }
 
   const allCheckedIn = rooms.every((r) => r.status === 'Checked-In');
   const updated = await prisma.booking.update({
@@ -225,7 +229,7 @@ export const checkInRooms = async (req, res) => {
   });
 
   await prisma.room.updateMany({
-    where: { roomNumber },
+    where: { roomNumber: { in: roomNumbersToUpdate } },
     data: { status: 'Occupied' },
   });
 
